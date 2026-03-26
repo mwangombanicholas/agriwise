@@ -41,25 +41,3 @@ cd agriwise
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Run the app
-streamlit run agriwise_app.py
-```
-
----
-
-## Team
-
-| Name | Program | Role |
-|------|---------|------|
-| Nicholas Mwangomba | Data Science | AI Model Development |
-
----
-
-## MW2063 Alignment
-
-Supports Malawi Vision 2063: Agricultural Productivity & Climate Resilience
-
----
-
-**Built with love by Mzuzu University Students**
