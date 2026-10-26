@@ -22,10 +22,13 @@ with tab1:
         
         # 1. THE BOUNCER: Check if it's actually a plant based on color
         img_array = np.array(image.resize((128, 128)))
-        avg_color = np.mean(img_array, axis=(0, 1))
+        avg_color = np.mean(img_array, axis=(0, 1)) # [Red, Green, Blue]
         
-        # If the image doesn't have enough green, it's not a plant
-        if avg_color[1] < 60 or avg_color[1] < avg_color[0]:
+        # Smarter check: A plant will have some green, and it should not be overwhelmingly red/blue.
+        # We lowered the green threshold to 40 to allow for shadows and dirt.
+        is_plant = (avg_color[1] > 40) and (avg_color[1] > avg_color[0] * 0.7) and (avg_color[1] > avg_color[2] * 0.7)
+        
+        if not is_plant:
             st.error("❌ **Invalid Image Detected.**")
             st.info("This does not look like a plant leaf. Please upload a clear, close-up photo of a maize leaf.")
         
@@ -64,7 +67,7 @@ with tab1:
                     display = display_names[result]
                     
                     # 3. CONFIDENCE CHECK: Is the AI sure?
-                    if confidence < 65.0:
+                    if confidence < 55.0:
                         st.warning("⚠️ **Unable to make a reliable diagnosis.**")
                         st.info("The image might be blurry, too far away, or not a clear maize leaf. Please try again.")
                     else:
