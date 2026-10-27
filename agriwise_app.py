@@ -4,23 +4,28 @@ from PIL import Image
 import os
 import requests
 import tensorflow as tf
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
 
 st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
-# --- MODEL DOWNLOADER ---
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
+# 1. Load your Maize Model
 @st.cache_resource
-def load_model():
+def load_maize_model():
     if not os.path.exists(MODEL_PATH):
         with st.spinner("Downloading AI model for the first time (61MB). Please wait..."):
             response = requests.get(MODEL_URL, stream=True)
             with open(MODEL_PATH, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
+                    if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
+
+# 2. Load the "Bouncer" (MobileNet) to check if it's a plant
+@st.cache_resource
+def load_bouncer():
+    return MobileNetV2(weights='imagenet')
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -36,24 +41,37 @@ with tab1:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # 1. THE BOUNCER: Check if it's actually a plant
-        img_array = np.array(image.resize((128, 128)))
-        avg_color = np.mean(img_array, axis=(0, 1)) 
-        
-        # Reject dark images, people, and documents
-        is_plant = (avg_color[1] > 50) and (avg_color[1] > avg_color[0] * 0.8) and (avg_color[1] > avg_color[2] * 0.8)
-        
+        # --- SMART BOUNCER CHECK ---
+        with st.spinner("Verifying image..."):
+            bouncer = load_bouncer()
+            # Resize and prepare image for MobileNet
+            img_resized = image.resize((224, 224))
+            img_array = np.array(img_resized)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array = preprocess_input(img_array)
+            
+            # Predict what is in the image
+            preds = bouncer.predict(img_array)
+            decoded = decode_predictions(preds, top=5)[0]
+            
+            # List of ImageNet keywords that mean "plant/leaf"
+            plant_keywords = ['leaf', 'plant', 'tree', 'crop', 'corn', 'maize', 'flower', 'vegetable', 'herb', 'grass']
+            is_plant = False
+            
+            for (imagenet_id, label, prob) in decoded:
+                if any(keyword in label.lower() for keyword in plant_keywords) and prob > 0.1:
+                    is_plant = True
+                    break
+            
+        # If the bouncer says it's not a plant, block it immediately
         if not is_plant:
             st.error("❌ **Invalid Image Detected.**")
             st.info("This does not look like a plant leaf. Please upload a clear, close-up photo of a maize leaf.")
-        
         else:
-            # 2. THE AI MODEL
+            # --- IF IT IS A PLANT, RUN YOUR MAIZE MODEL ---
             try:
-                with st.spinner("Loading AI Model... (If this is the first time, it may take 1 minute)"):
-                    model = load_model()
-                
-                with st.spinner("Analyzing..."):
+                with st.spinner("Analyzing crop..."):
+                    model = load_maize_model()
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
@@ -72,7 +90,6 @@ with tab1:
                     result = class_names[idx]
                     display = display_names[result]
                     
-                    # 3. CONFIDENCE CHECK
                     if confidence < 60.0:
                         st.warning("⚠️ **Unable to make a reliable diagnosis.**")
                         st.info("The image might be blurry, too far away, or not a clear maize leaf. Please try again.")
@@ -97,9 +114,10 @@ with tab1:
                         col1.write(f"**Chemical:** {info['chemical']}")
                         col2.write(f"**Organic:** {info['organic']}")
             except Exception as e:
-                st.error("Failed to load the AI model. Please refresh the page and try again.")
+                st.error("Failed to load the AI model. Please refresh and try again.")
 
 with tab2:
+    # Weather tab remains the same
     st.header("Weather Advisory")
     district = st.selectbox("Select district", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
     weather_alerts = {
