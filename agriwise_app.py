@@ -1,11 +1,11 @@
-import streamlit as st
+ import streamlit as st
 import numpy as np
 from PIL import Image
 import os
 import requests
 import tensorflow as tf
 
-st.set_page_config(page_title="AgriWise", page_icon="🌽🌽", layout="wide")
+st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
@@ -20,18 +20,28 @@ def load_model():
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
+# --- BETTER BOUNCER (Center crop + strict color check) ---
 def is_it_a_leaf(image):
+    # 1. Crop the center 50% of the image (where the user should hold the leaf)
     width, height = image.size
-    left, top = width * 0.25, height * 0.25
-    right, bottom = width * 0.75, height * 0.75
+    left = width * 0.25
+    top = height * 0.25
+    right = width * 0.75
+    bottom = height * 0.75
     center_image = image.crop((left, top, right, bottom))
     
+    # 2. Check colors in the center
     img_hsv = np.array(center_image.convert('HSV'))
-    hue, sat = img_hsv[:, :, 0], img_hsv[:, :, 1] 
+    hue = img_hsv[:, :, 0]
+    sat = img_hsv[:, :, 1] 
     
+    # Look for Green/Yellow/Brown in the center
     plant_pixels = np.sum(((hue >= 20) & (hue <= 90)) & (sat > 50))
     total_pixels = center_image.width * center_image.height
-    return (plant_pixels / total_pixels) * 100 > 40
+    
+    percentage = (plant_pixels / total_pixels) * 100
+    # Require at least 40% of the CENTER to be plant-colored
+    return percentage > 40
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -47,6 +57,7 @@ with tab1:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
+        # Run the new Bouncer
         if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
             st.info("This does not look like a plant leaf. Please take a close-up photo where the leaf fills the center of the screen.")
@@ -72,13 +83,11 @@ with tab1:
                     result = class_names[idx]
                     display = display_names[result]
                     
-                    # --- THE ULTIMATE FIX ---
-                    # If the AI is 100% confident, it's overfitted and guessing.
-                    # If it's below 80%, it's guessing. 
-                    # We force the app to only accept 80.0 - 99.9% confidence.
-                    if confidence >= 99.9 or confidence < 80.0:
-                        st.error("⚠️ **Unreliable Diagnosis.**")
-                        st.info("The model could not reliably identify this image. It may be a different crop, a blurry photo, or a disease not in our dataset. Please try a clearer photo.")
+                    # --- STRICT CONFIDENCE CHECK ---
+                    # If the AI is not at least 85% sure, we reject it.
+                    if confidence < 85.0:
+                        st.error("⚠️ **Image unclear or invalid.**")
+                        st.info("We could not reliably diagnose this image. Please ensure it is a clear, well-lit photo of a maize leaf.")
                     else:
                         if 'healthy' in result:
                             st.success(f"### ✅ Diagnosis: {display}")
