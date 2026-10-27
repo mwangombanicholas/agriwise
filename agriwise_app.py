@@ -52,7 +52,7 @@ def is_it_a_leaf(image):
         
     return True
 
-st.title("🌾 AgriWise")
+st.title("🌽 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
 st.markdown("**Supported crop:** 🌽 Maize (Corn) | **Model Accuracy:** 96%")
 
