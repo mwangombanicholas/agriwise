@@ -4,16 +4,14 @@ from PIL import Image
 import os
 import requests
 import tensorflow as tf
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
 
 st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
-# 1. Load your Maize Model
 @st.cache_resource
-def load_maize_model():
+def load_model():
     if not os.path.exists(MODEL_PATH):
         with st.spinner("Downloading AI model for the first time (61MB). Please wait..."):
             response = requests.get(MODEL_URL, stream=True)
@@ -22,10 +20,24 @@ def load_maize_model():
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# 2. Load the "Bouncer" (MobileNet) to check if it's a plant
-@st.cache_resource
-def load_bouncer():
-    return MobileNetV2(weights='imagenet')
+# --- NEW SMART BOUNCER ---
+def is_it_a_leaf(image):
+    # Convert image to HSV (Hue, Saturation, Value)
+    img_hsv = np.array(image.convert('HSV'))
+    
+    # Define color ranges for plants (Green, Yellow, Brown)
+    # Hue is 0-255 in PIL HSV.
+    # Green: ~40 to 100, Yellow/Brown: ~15 to 45
+    hue = img_hsv[:, :, 0]
+    sat = img_hsv[:, :, 1] # Saturation (how pure the color is)
+    
+    # A leaf will have high saturation in green/yellow/brown ranges
+    plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
+    total_pixels = image.width * image.height
+    
+    # If more than 15% of the image is green/yellow/brown, it's a leaf
+    percentage = (plant_pixels / total_pixels) * 100
+    return percentage > 15
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -41,37 +53,15 @@ with tab1:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # --- SMART BOUNCER CHECK ---
-        with st.spinner("Verifying image..."):
-            bouncer = load_bouncer()
-            # Resize and prepare image for MobileNet
-            img_resized = image.resize((224, 224))
-            img_array = np.array(img_resized)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = preprocess_input(img_array)
-            
-            # Predict what is in the image
-            preds = bouncer.predict(img_array)
-            decoded = decode_predictions(preds, top=5)[0]
-            
-            # List of ImageNet keywords that mean "plant/leaf"
-            plant_keywords = ['leaf', 'plant', 'tree', 'crop', 'corn', 'maize', 'flower', 'vegetable', 'herb', 'grass']
-            is_plant = False
-            
-            for (imagenet_id, label, prob) in decoded:
-                if any(keyword in label.lower() for keyword in plant_keywords) and prob > 0.1:
-                    is_plant = True
-                    break
-            
-        # If the bouncer says it's not a plant, block it immediately
-        if not is_plant:
+        # Run the Bouncer
+        if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
-            st.info("This does not look like a plant leaf. Please upload a clear, close-up photo of a maize leaf.")
+            st.info("This does not look like a plant leaf. Please upload a clear photo of a maize leaf.")
         else:
-            # --- IF IT IS A PLANT, RUN YOUR MAIZE MODEL ---
             try:
                 with st.spinner("Analyzing crop..."):
-                    model = load_maize_model()
+                    model = load_model()
+                    # Resize for your model
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
@@ -117,7 +107,6 @@ with tab1:
                 st.error("Failed to load the AI model. Please refresh and try again.")
 
 with tab2:
-    # Weather tab remains the same
     st.header("Weather Advisory")
     district = st.selectbox("Select district", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
     weather_alerts = {
