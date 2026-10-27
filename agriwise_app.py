@@ -3,8 +3,24 @@ import numpy as np
 from PIL import Image
 import os
 import requests
+import tensorflow as tf
 
 st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
+
+# --- MODEL DOWNLOADER ---
+MODEL_PATH = "agriwise_model.h5"
+MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
+
+@st.cache_resource
+def load_model():
+    if not os.path.exists(MODEL_PATH):
+        with st.spinner("Downloading AI model for the first time (61MB). Please wait..."):
+            response = requests.get(MODEL_URL, stream=True)
+            with open(MODEL_PATH, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+    return tf.keras.models.load_model(MODEL_PATH)
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -20,13 +36,12 @@ with tab1:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # 1. THE BOUNCER: Check if it's actually a plant based on color
+        # 1. THE BOUNCER: Check if it's actually a plant
         img_array = np.array(image.resize((128, 128)))
-        avg_color = np.mean(img_array, axis=(0, 1)) # [Red, Green, Blue]
+        avg_color = np.mean(img_array, axis=(0, 1)) 
         
-        # Smarter check: A plant will have some green, and it should not be overwhelmingly red/blue.
-        # We lowered the green threshold to 40 to allow for shadows and dirt.
-        is_plant = (avg_color[1] > 40) and (avg_color[1] > avg_color[0] * 0.7) and (avg_color[1] > avg_color[2] * 0.7)
+        # Reject dark images, people, and documents
+        is_plant = (avg_color[1] > 50) and (avg_color[1] > avg_color[0] * 0.8) and (avg_color[1] > avg_color[2] * 0.8)
         
         if not is_plant:
             st.error("❌ **Invalid Image Detected.**")
@@ -35,23 +50,14 @@ with tab1:
         else:
             # 2. THE AI MODEL
             try:
-                import tensorflow as tf
-                
-                model_path = "agriwise_model.h5"
-                if not os.path.exists(model_path):
-                    with st.spinner("Downloading AI model..."):
-                        url = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
-                        response = requests.get(url, stream=True)
-                        with open(model_path, 'wb') as f:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                if chunk: f.write(chunk)
+                with st.spinner("Loading AI Model... (If this is the first time, it may take 1 minute)"):
+                    model = load_model()
                 
                 with st.spinner("Analyzing..."):
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
                     
-                    model = tf.keras.models.load_model(model_path)
                     predictions = model.predict(img_array)
                     idx = np.argmax(predictions[0])
                     confidence = predictions[0][idx] * 100
@@ -66,8 +72,8 @@ with tab1:
                     result = class_names[idx]
                     display = display_names[result]
                     
-                    # 3. CONFIDENCE CHECK: Is the AI sure?
-                    if confidence < 55.0:
+                    # 3. CONFIDENCE CHECK
+                    if confidence < 60.0:
                         st.warning("⚠️ **Unable to make a reliable diagnosis.**")
                         st.info("The image might be blurry, too far away, or not a clear maize leaf. Please try again.")
                     else:
@@ -90,9 +96,8 @@ with tab1:
                         col1, col2 = st.columns(2)
                         col1.write(f"**Chemical:** {info['chemical']}")
                         col2.write(f"**Organic:** {info['organic']}")
-            
             except Exception as e:
-                st.error("Model currently unavailable. Please check your connection.")
+                st.error("Failed to load the AI model. Please refresh the page and try again.")
 
 with tab2:
     st.header("Weather Advisory")
