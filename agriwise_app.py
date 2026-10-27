@@ -5,7 +5,7 @@ import os
 import requests
 import tensorflow as tf
 
-st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
+st.set_page_config(page_title="AgriWise", page_icon="🌽🌽", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
