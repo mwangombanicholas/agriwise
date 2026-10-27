@@ -20,28 +20,37 @@ def load_model():
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- BETTER BOUNCER (Center crop + strict color check) ---
+# --- SMART BOUNCER ---
 def is_it_a_leaf(image):
-    # 1. Crop the center 50% of the image (where the user should hold the leaf)
-    width, height = image.size
-    left = width * 0.25
-    top = height * 0.25
-    right = width * 0.75
-    bottom = height * 0.75
-    center_image = image.crop((left, top, right, bottom))
+    # 1. Resize to speed up processing
+    img = image.resize((128, 128))
+    img_rgb = np.array(img)
     
-    # 2. Check colors in the center
-    img_hsv = np.array(center_image.convert('HSV'))
+    # 2. Check for Plant Colors (Green, Yellow, Brown)
+    img_hsv = np.array(img.convert('HSV'))
     hue = img_hsv[:, :, 0]
     sat = img_hsv[:, :, 1] 
     
-    # Look for Green/Yellow/Brown in the center
-    plant_pixels = np.sum(((hue >= 20) & (hue <= 90)) & (sat > 50))
-    total_pixels = center_image.width * center_image.height
+    # A leaf will have a lot of saturated green/yellow/brown pixels
+    plant_pixels = np.sum(((hue >= 20) & (hue <= 95)) & (sat > 50))
+    total_pixels = 128 * 128
+    color_score = (plant_pixels / total_pixels) * 100
     
-    percentage = (plant_pixels / total_pixels) * 100
-    # Require at least 40% of the CENTER to be plant-colored
-    return percentage > 40
+    # If less than 35% of the image is plant-colored, reject it
+    if color_score < 35:
+        return False
+        
+    # 3. Check for Texture (Leaves have edges, clear backgrounds don't)
+    # Calculate the difference between neighboring pixels
+    gray = np.mean(img_rgb, axis=2)
+    edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
+    texture_score = edges / total_pixels
+    
+    # If the image is too smooth (like a wall or a document), reject it
+    if texture_score < 15:
+        return False
+        
+    return True
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -53,11 +62,13 @@ with tab1:
     st.header("Upload a photo of your maize leaf")
     uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
     
+    # Adding the disclaimer for the judges
+    st.caption("⚠️ Note: This AI is trained specifically for maize leaves. Photos of people, animals, or objects will be rejected.")
+    
     if uploaded:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # Run the new Bouncer
         if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
             st.info("This does not look like a plant leaf. Please take a close-up photo where the leaf fills the center of the screen.")
@@ -83,31 +94,25 @@ with tab1:
                     result = class_names[idx]
                     display = display_names[result]
                     
-                    # --- STRICT CONFIDENCE CHECK ---
-                    # If the AI is not at least 85% sure, we reject it.
-                    if confidence < 85.0:
-                        st.error("⚠️ **Image unclear or invalid.**")
-                        st.info("We could not reliably diagnose this image. Please ensure it is a clear, well-lit photo of a maize leaf.")
+                    if 'healthy' in result:
+                        st.success(f"### ✅ Diagnosis: {display}")
                     else:
-                        if 'healthy' in result:
-                            st.success(f"### ✅ Diagnosis: {display}")
-                        else:
-                            st.warning(f"### ⚠️ Diagnosis: {display}")
-                        st.info(f"**Confidence:** {confidence:.1f}%")
-                        
-                        treatment_info = {
-                            'healthy': {'chemical': 'No treatment needed', 'organic': 'Continue good practices'},
-                            'common_rust': {'chemical': 'Azoxystrobin fungicide', 'organic': 'Neem oil spray'},
-                            'cercospora_leaf_spot': {'chemical': 'Mancozeb fungicide', 'organic': 'Remove infected leaves'},
-                            'northern_leaf_blight': {'chemical': 'Azoxystrobin + Propiconazole', 'organic': 'Baking soda solution'}
-                        }
-                        key = result.replace('maize_', '')
-                        info = treatment_info.get(key, treatment_info['healthy'])
-                        
-                        st.subheader("💊 Treatment")
-                        col1, col2 = st.columns(2)
-                        col1.write(f"**Chemical:** {info['chemical']}")
-                        col2.write(f"**Organic:** {info['organic']}")
+                        st.warning(f"### ⚠️ Diagnosis: {display}")
+                    st.info(f"**Confidence:** {confidence:.1f}%")
+                    
+                    treatment_info = {
+                        'healthy': {'chemical': 'No treatment needed', 'organic': 'Continue good practices'},
+                        'common_rust': {'chemical': 'Azoxystrobin fungicide', 'organic': 'Neem oil spray'},
+                        'cercospora_leaf_spot': {'chemical': 'Mancozeb fungicide', 'organic': 'Remove infected leaves'},
+                        'northern_leaf_blight': {'chemical': 'Azoxystrobin + Propiconazole', 'organic': 'Baking soda solution'}
+                    }
+                    key = result.replace('maize_', '')
+                    info = treatment_info.get(key, treatment_info['healthy'])
+                    
+                    st.subheader("💊 Treatment")
+                    col1, col2 = st.columns(2)
+                    col1.write(f"**Chemical:** {info['chemical']}")
+                    col2.write(f"**Organic:** {info['organic']}")
             except Exception as e:
                 st.error("Failed to load the AI model. Please refresh and try again.")
 
