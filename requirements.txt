@@ -3,4 +3,3 @@ numpy
 pillow
 tensorflow
 requests
-opencv-python-headless
