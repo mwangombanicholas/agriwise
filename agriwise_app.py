@@ -13,31 +13,35 @@ MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&ex
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading AI model for the first time (61MB). Please wait..."):
+        with st.spinner("Downloading AI model..."):
             response = requests.get(MODEL_URL, stream=True)
             with open(MODEL_PATH, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- NEW SMART BOUNCER ---
+# --- BETTER BOUNCER (Center crop + strict color check) ---
 def is_it_a_leaf(image):
-    # Convert image to HSV (Hue, Saturation, Value)
-    img_hsv = np.array(image.convert('HSV'))
+    # 1. Crop the center 50% of the image (where the user should hold the leaf)
+    width, height = image.size
+    left = width * 0.25
+    top = height * 0.25
+    right = width * 0.75
+    bottom = height * 0.75
+    center_image = image.crop((left, top, right, bottom))
     
-    # Define color ranges for plants (Green, Yellow, Brown)
-    # Hue is 0-255 in PIL HSV.
-    # Green: ~40 to 100, Yellow/Brown: ~15 to 45
+    # 2. Check colors in the center
+    img_hsv = np.array(center_image.convert('HSV'))
     hue = img_hsv[:, :, 0]
-    sat = img_hsv[:, :, 1] # Saturation (how pure the color is)
+    sat = img_hsv[:, :, 1] 
     
-    # A leaf will have high saturation in green/yellow/brown ranges
-    plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
-    total_pixels = image.width * image.height
+    # Look for Green/Yellow/Brown in the center
+    plant_pixels = np.sum(((hue >= 20) & (hue <= 90)) & (sat > 50))
+    total_pixels = center_image.width * center_image.height
     
-    # If more than 15% of the image is green/yellow/brown, it's a leaf
     percentage = (plant_pixels / total_pixels) * 100
-    return percentage > 15
+    # Require at least 40% of the CENTER to be plant-colored
+    return percentage > 40
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -53,15 +57,14 @@ with tab1:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # Run the Bouncer
+        # Run the new Bouncer
         if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
-            st.info("This does not look like a plant leaf. Please upload a clear photo of a maize leaf.")
+            st.info("This does not look like a plant leaf. Please take a close-up photo where the leaf fills the center of the screen.")
         else:
             try:
                 with st.spinner("Analyzing crop..."):
                     model = load_model()
-                    # Resize for your model
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
@@ -80,9 +83,11 @@ with tab1:
                     result = class_names[idx]
                     display = display_names[result]
                     
-                    if confidence < 60.0:
-                        st.warning("⚠️ **Unable to make a reliable diagnosis.**")
-                        st.info("The image might be blurry, too far away, or not a clear maize leaf. Please try again.")
+                    # --- STRICT CONFIDENCE CHECK ---
+                    # If the AI is not at least 85% sure, we reject it.
+                    if confidence < 85.0:
+                        st.error("⚠️ **Image unclear or invalid.**")
+                        st.info("We could not reliably diagnose this image. Please ensure it is a clear, well-lit photo of a maize leaf.")
                     else:
                         if 'healthy' in result:
                             st.success(f"### ✅ Diagnosis: {display}")
