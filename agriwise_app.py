@@ -22,20 +22,35 @@ def load_model():
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
+# --- SMART BOUNCER (Balanced for real leaves) ---
 def is_it_a_leaf(image):
+    # 1. Resize image
     img = image.resize((128, 128))
     img_rgb = np.array(img)
+    
+    # 2. Check for Plant Colors (Green, Yellow, Brown)
     img_hsv = np.array(img.convert('HSV'))
     hue = img_hsv[:, :, 0]
     sat = img_hsv[:, :, 1] 
+    
+    # Count pixels that are green, yellow, or brown
     plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
     total_pixels = 128 * 128
     color_score = (plant_pixels / total_pixels) * 100
-    if color_score < 25: return False
+    
+    # If less than 25% of the image is plant-colored, reject it
+    if color_score < 25:
+        return False
+        
+    # 3. Check for Texture
     gray = np.mean(img_rgb, axis=2)
     edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
     texture_score = edges / total_pixels
-    if texture_score < 10: return False
+    
+    # If the image is completely smooth (like a screen or wall), reject it
+    if texture_score < 10:
+        return False
+        
     return True
 
 st.title("🌾 AgriWise")
@@ -44,7 +59,6 @@ st.markdown("**Supported crop:** 🌽 Maize (Corn)")
 
 tab1, tab2 = st.tabs(["📸 Disease Detection", "⛅ Weather Advisory"])
 
-# ================= TAB 1: ORIGINAL LAYOUT =================
 with tab1:
     st.header("Upload a photo of your maize leaf")
     uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
@@ -102,28 +116,29 @@ with tab1:
             except Exception as e:
                 st.error(f"Error analyzing image: {str(e)}")
 
-# ================= TAB 2: VIDEO BACKGROUND =================
 with tab2:
-    # 1. Read the video file
+    # --- VIDEO BACKGROUND INJECTION ---
     video_file = "weather_bg.mp4"
     if os.path.exists(video_file):
         with open(video_file, "rb") as f:
             video_bytes = f.read()
             encoded_video = base64.b64encode(video_bytes).decode()
         
-        # 2. HTML/CSS for the video background
+        # We use CSS to make the video cover the background and place the header on top
         video_html = f"""
         <style>
-        .video-container {{
+        .weather-container {{
             position: relative;
             width: 100%;
-            height: 400px;
+            height: 300px;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }}
-        .video-bg {{
+        .weather-video {{
             position: absolute;
             top: 0;
             left: 0;
@@ -133,35 +148,29 @@ with tab2:
             z-index: 0;
             opacity: 0.8;
         }}
-        .content-overlay {{
+        .weather-title {{
             position: relative;
             z-index: 1;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 10px;
-            margin: 2rem;
-            max-width: 500px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
         }}
         </style>
         
-        <div class="video-container">
-            <video autoplay loop muted playsinline class="video-bg">
+        <div class="weather-container">
+            <video autoplay loop muted playsinline class="weather-video">
                 <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
             </video>
-            
-            <div class="content-overlay">
-                <h2>⛅ Weather Advisory</h2>
-                <p>Select your district below to view local forecasts and agricultural alerts.</p>
-            </div>
+            <div class="weather-title">⛅ Weather Advisory</div>
         </div>
         """
-        components.html(video_html, height=420)
+        components.html(video_html, height=320)
+    else:
+        st.header("Weather Advisory")
     
-    # 3. The actual weather logic (below the video)
-    st.header("Select District")
+    # --- YOUR ORIGINAL WEATHER LOGIC ---
     district = st.selectbox("Select district", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
-    
     weather_alerts = {
         "Mzuzu": ("No active alerts", "success"),
         "Mzimba": ("🌵 DRY SPELL ALERT: Irrigate if possible", "warning"),
@@ -170,9 +179,7 @@ with tab2:
         "Nkhata Bay": ("🚨 FLOOD ALERT: Heavy rains expected", "error")
     }
     msg, alert_type = weather_alerts.get(district, ("No active alerts", "success"))
-    
     if alert_type == "error": st.error(msg)
     elif alert_type == "warning": st.warning(msg)
     else: st.success(msg)
-    
     st.info("📅 Maize planting: November-December")
