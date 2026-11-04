@@ -4,31 +4,53 @@ from PIL import Image
 import os
 import requests
 import tensorflow as tf
-import cv2
-
-# Load MobileNet for the Bouncer (Pre-trained on 1000 everyday objects)
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
 
 st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
-# Load models once
 @st.cache_resource
-def load_maize_model():
+def load_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading AgriWise AI model (61MB)..."):
+        with st.spinner("Downloading AI model..."):
             response = requests.get(MODEL_URL, stream=True)
             with open(MODEL_PATH, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-@st.cache_resource
-def load_bouncer():
-    # This model knows what a leaf, person, dog, car, etc. looks like
-    return MobileNetV2(weights='imagenet')
+# --- SMART BOUNCER (Balanced for real leaves) ---
+def is_it_a_leaf(image):
+    # 1. Resize image
+    img = image.resize((128, 128))
+    img_rgb = np.array(img)
+    
+    # 2. Check for Plant Colors (Green, Yellow, Brown)
+    img_hsv = np.array(img.convert('HSV'))
+    hue = img_hsv[:, :, 0]
+    sat = img_hsv[:, :, 1] 
+    
+    # Count pixels that are green, yellow, or brown
+    plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
+    total_pixels = 128 * 128
+    color_score = (plant_pixels / total_pixels) * 100
+    
+    # If less than 25% of the image is plant-colored, reject it
+    # (Lowered from 35% to 25% to accept more real leaves)
+    if color_score < 25:
+        return False
+        
+    # 3. Check for Texture
+    gray = np.mean(img_rgb, axis=2)
+    edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
+    texture_score = edges / total_pixels
+    
+    # If the image is completely smooth (like a screen or wall), reject it
+    if texture_score < 10:
+        return False
+        
+    return True
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
@@ -40,40 +62,18 @@ with tab1:
     st.header("Upload a photo of your maize leaf")
     uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
     
-    st.caption("⚠️ Note: This AI is trained specifically for maize leaves. Photos of people, animals, or objects will be rejected.")
+    st.caption("⚠️ Note: This AI is trained for maize leaves. Photos of people or objects will be rejected.")
     
     if uploaded:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # --- STEP 1: THE BOUNCER CHECK ---
-        with st.spinner("Verifying image..."):
-            bouncer = load_bouncer()
-            img_resized = image.resize((224, 224))
-            img_array = np.array(img_resized)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = preprocess_input(img_array)
-            
-            preds = bouncer.predict(img_array)
-            decoded = decode_predictions(preds, top=5)[0]
-            
-            # ImageNet labels for plants/leaves
-            plant_keywords = ['leaf', 'plant', 'tree', 'crop', 'corn', 'maize', 'flower', 'vegetable', 'herb', 'grass', 'daisy', 'sunflower', 'rose']
-            is_plant = False
-            
-            for (imagenet_id, label, prob) in decoded:
-                if any(keyword in label.lower() for keyword in plant_keywords) and prob > 0.1:
-                    is_plant = True
-                    break
-            
-        # If MobileNet says it's a person, object, or background, BLOCK IT.
-        if not is_plant:
+        if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
-            st.info("This does not look like a plant leaf. Please upload a clear photo of a maize leaf.")
+            st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
         else:
-            # --- STEP 2: RUN THE MAIZE MODEL ---
             try:
-                model = load_maize_model()
+                model = load_model()
                 with st.spinner("Analyzing crop..."):
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
