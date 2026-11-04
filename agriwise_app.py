@@ -6,7 +6,7 @@ import requests
 import tensorflow as tf
 import base64
 
-st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
+st.set_page_config(page_title="AgriWise", page_icon="🌽", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
@@ -20,7 +20,7 @@ if os.path.exists(bg_image_path):
 else:
     bg_url = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2070&auto=format&fit=crop"
 
-# --- CUSTOM CSS TO FIX THE WHITE BACKGROUND ---
+# --- CUSTOM CSS ---
 st.markdown(f"""
 <style>
     /* Main Background */
@@ -31,43 +31,69 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
     
-    /* SOLID WHITE container for the main content */
+    /* Make the main container transparent so the image shows through */
     .block-container {{
-        background: #ffffff !important; /* Solid white to hide the background image */
+        background: transparent !important;
+        padding-top: 2rem !important;
+    }}
+    
+    /* The big white headline */
+    .hero-title {{
+        color: white !important;
+        font-size: 3.5rem !important;
+        font-weight: 800 !important;
+        line-height: 1.2;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+        margin-bottom: 2rem;
+    }}
+
+    /* The 4 feature badges on the left */
+    .feature-badge {{
+        background-color: white;
+        border-radius: 30px;
+        padding: 10px 20px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        font-weight: bold;
+        color: #2e7d32 !important;
+        font-size: 1.1rem;
+    }}
+    
+    .feature-badge span {{
+        margin-right: 10px;
+        font-size: 1.3rem;
+    }}
+
+    /* The right side white card */
+    .scan-card {{
+        background-color: white;
+        padding: 2rem;
         border-radius: 15px;
-        padding: 2rem 3rem;
-        margin-top: 2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Strong shadow to make it pop */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }}
-    
-    /* Force ALL text to be dark green so it's readable on white */
-    h1, h2, h3, h4, p, span, label, div {{
+
+    /* Fix ALL text inside the white card to be readable */
+    .scan-card h2, .scan-card h3, .scan-card p, .scan-card span, .scan-card label, .scan-card div {{
         color: #1b5e20 !important;
-        font-family: 'Helvetica Neue', sans-serif;
     }}
     
-    /* Fix the File Uploader Box */
+    /* File Uploader Styling */
     [data-testid="stFileUploader"] {{
         background-color: #f8f9fa;
-        padding: 1.5rem;
+        padding: 1rem;
         border-radius: 10px;
         border: 2px dashed #2e7d32;
     }}
-    
-    /* Professional Buttons */
-    .stButton>button {{
-        background-color: #2e7d32;
-        color: white !important;
-        border-radius: 8px;
-        border: none;
-        padding: 0.5rem 1rem;
-        font-weight: bold;
-    }}
-    
-    /* Sidebar Styling - Solid White */
+
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {{
         background-color: #ffffff !important;
-        border-right: 2px solid #2e7d32;
+    }}
+    [data-testid="stSidebar"] * {{
+        color: #1b5e20 !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -101,40 +127,54 @@ def is_it_a_leaf(image):
     if texture_score < 10: return False
     return True
 
-# --- SIDEBAR ---
+# --- SIDEBAR (Maize Theme) ---
 with st.sidebar:
-    st.markdown("### 🌱 About AgriWise")
+    st.markdown("<h1 style='text-align: center;'>🌽</h1>", unsafe_allow_html=True) # Maize Icon
+    st.markdown("### About AgriWise")
     st.write("Built by **Mzuzu University Students** for smallholder farmers.")
     st.markdown("---")
-    st.markdown("**Supported Crop:** 🌽 Maize (Corn)")
+    st.markdown("**Supported Crop:** Maize (Corn)")
     st.markdown("**Model Accuracy:** 96%")
     st.markdown("---")
-    st.markdown("#### 🔍 Detects:")
+    st.markdown("#### Detects:")
     st.markdown("- Healthy Maize\n- Common Rust\n- Cercospora Leaf Spot\n- Northern Leaf Blight")
 
-# --- MAIN UI ---
-# Adding a clean title outside the white box for a modern look
-st.markdown("<h2 style='text-align: center; color: white !important; text-shadow: 2px 2px 4px #000000;'>Bringing Innovation to Your Farming Journey</h2>", unsafe_allow_html=True)
+# --- MAIN UI LAYOUT ---
 
-# The white block starts here
+# 1. The Big Title
+st.markdown('<div class="hero-title">Bringing Innovation to<br>Your Farming Journey.</div>', unsafe_allow_html=True)
+
+# 2. Tabs
 tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
 with tab1:
-    st.header("Scan Your Maize Crop")
-    st.markdown("Take a clear, close-up photo of a single maize leaf.")
-    
-    uploaded = st.file_uploader("Upload an image (JPG, PNG)", type=['jpg', 'jpeg', 'png'])
-    
-    st.caption("⚠️ Note: This AI is trained for maize leaves. Photos of people or objects will be rejected.")
-    
-    if uploaded:
-        col1, col2 = st.columns([1, 2])
-        image = Image.open(uploaded).convert('RGB')
+    # Create two columns
+    col_left, col_right = st.columns([1, 1.5], gap="large")
+
+    # LEFT COLUMN: Feature Badges
+    with col_left:
+        st.markdown("""
+        <div class="feature-badge"><span>🌱</span> Better Growth</div>
+        <div class="feature-badge"><span>🛡️</span> Strong Protection</div>
+        <div class="feature-badge"><span>📈</span> Higher Yield</div>
+        <div class="feature-badge"><span>🌍</span> Sustainable Future</div>
+        """, unsafe_allow_html=True)
+
+    # RIGHT COLUMN: The Upload Card
+    with col_right:
+        st.markdown("""
+        <div class="scan-card">
+            <h2>📸 Scan Your Maize Crop</h2>
+            <p>Take a clear, close-up photo of a single maize leaf to get an instant AI diagnosis.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        with col1:
+        uploaded = st.file_uploader("Upload an image (JPG, PNG)", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
+        
+        if uploaded:
+            image = Image.open(uploaded).convert('RGB')
             st.image(image, caption="Uploaded Image", use_column_width=True)
             
-        with col2:
             if not is_it_a_leaf(image):
                 st.error("❌ **Invalid Image Detected.**")
                 st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
@@ -167,10 +207,11 @@ with tab1:
                             
                         st.info(f"**Confidence:** {confidence:.1f}%")
                         
+                        # MAIZE SPECIFIC CHEMICALS
                         treatment_info = {
                             'healthy': {'chemical': 'No treatment needed', 'organic': 'Continue good practices'},
-                            'common_rust': {'chemical': 'Azoxystrobin fungicide', 'organic': 'Neem oil spray'},
-                            'cercospora_leaf_spot': {'chemical': 'Mancozeb fungicide', 'organic': 'Remove infected leaves'},
+                            'common_rust': {'chemical': 'Azoxystrobin or Propiconazole fungicide', 'organic': 'Neem oil spray'},
+                            'cercospora_leaf_spot': {'chemical': 'Mancozeb or Chlorothalonil fungicide', 'organic': 'Remove infected leaves'},
                             'northern_leaf_blight': {'chemical': 'Azoxystrobin + Propiconazole', 'organic': 'Baking soda solution'}
                         }
                         key = result.replace('maize_', '')
@@ -184,6 +225,8 @@ with tab1:
                     st.error(f"Error analyzing image: {str(e)}")
 
 with tab2:
+    # Use a white card for the weather too
+    st.markdown('<div class="scan-card">', unsafe_allow_html=True)
     st.header("Localized Climate Advisory")
     
     col_w1, col_w2 = st.columns(2)
@@ -200,8 +243,6 @@ with tab2:
     
     msg, alert_type = weather_alerts.get(district, ("No active weather alerts for your area.", "success"))
     
-    st.markdown("---")
-    
     m1, m2, m3 = st.columns(3)
     m1.metric("🌡️ Temperature", "24°C")
     m2.metric("🌧️ Rainfall", "Moderate")
@@ -212,3 +253,4 @@ with tab2:
     else: st.success(msg)
     
     st.info("📅 **Planting Calendar:**\n- **Maize:** Plant in November - December\n- **Harvest:** April - June")
+    st.markdown('</div>', unsafe_allow_html=True)
