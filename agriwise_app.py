@@ -4,49 +4,35 @@ from PIL import Image
 import os
 import requests
 import tensorflow as tf
+import cv2
+
+# Load MobileNet for the Bouncer (Pre-trained on 1000 everyday objects)
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
 
 st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
-# 1. STRONGER MODEL LOADING
-@st.cache_resource(show_spinner=False)
-def load_model():
+# Load models once
+@st.cache_resource
+def load_maize_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading AI model (61MB) for the first time... Please wait."):
+        with st.spinner("Downloading AgriWise AI model (61MB)..."):
             response = requests.get(MODEL_URL, stream=True)
             with open(MODEL_PATH, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# 2. SMARTER BOUNCER (Looks at the WHOLE image, not just the center)
-def is_it_a_leaf(image):
-    img = image.resize((128, 128))
-    img_rgb = np.array(img)
-    
-    # Check colors
-    img_hsv = np.array(img.convert('HSV'))
-    hue = img_hsv[:, :, 0]
-    sat = img_hsv[:, :, 1] 
-    plant_pixels = np.sum(((hue >= 20) & (hue <= 95)) & (sat > 40)) # Lowered sat to allow sick/light leaves
-    total_pixels = 128 * 128
-    color_score = (plant_pixels / total_pixels) * 100
-    
-    # Check texture
-    gray = np.mean(img_rgb, axis=2)
-    edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
-    texture_score = edges / total_pixels
-    
-    # Must have at least 25% plant colors and some texture
-    if color_score < 25 or texture_score < 10:
-        return False
-    return True
+@st.cache_resource
+def load_bouncer():
+    # This model knows what a leaf, person, dog, car, etc. looks like
+    return MobileNetV2(weights='imagenet')
 
 st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
-st.markdown("**Supported crop:** 🌽 Maize (Corn) | **Model Accuracy:** 96%")
+st.markdown("**Supported crop:** 🌽 Maize (Corn)")
 
 tab1, tab2 = st.tabs(["📸 Disease Detection", "⛅ Weather Advisory"])
 
@@ -60,14 +46,34 @@ with tab1:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        if not is_it_a_leaf(image):
+        # --- STEP 1: THE BOUNCER CHECK ---
+        with st.spinner("Verifying image..."):
+            bouncer = load_bouncer()
+            img_resized = image.resize((224, 224))
+            img_array = np.array(img_resized)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array = preprocess_input(img_array)
+            
+            preds = bouncer.predict(img_array)
+            decoded = decode_predictions(preds, top=5)[0]
+            
+            # ImageNet labels for plants/leaves
+            plant_keywords = ['leaf', 'plant', 'tree', 'crop', 'corn', 'maize', 'flower', 'vegetable', 'herb', 'grass', 'daisy', 'sunflower', 'rose']
+            is_plant = False
+            
+            for (imagenet_id, label, prob) in decoded:
+                if any(keyword in label.lower() for keyword in plant_keywords) and prob > 0.1:
+                    is_plant = True
+                    break
+            
+        # If MobileNet says it's a person, object, or background, BLOCK IT.
+        if not is_plant:
             st.error("❌ **Invalid Image Detected.**")
-            st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
+            st.info("This does not look like a plant leaf. Please upload a clear photo of a maize leaf.")
         else:
+            # --- STEP 2: RUN THE MAIZE MODEL ---
             try:
-                # Load model
-                model = load_model()
-                
+                model = load_maize_model()
                 with st.spinner("Analyzing crop..."):
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
@@ -107,9 +113,7 @@ with tab1:
                     col1.write(f"**Chemical:** {info['chemical']}")
                     col2.write(f"**Organic:** {info['organic']}")
             except Exception as e:
-                # If it fails, show the actual error instead of hiding in Demo Mode
                 st.error(f"Error analyzing image: {str(e)}")
-                st.warning("The model is taking too long to load. Please refresh the page and try again.")
 
 with tab2:
     st.header("Weather Advisory")
