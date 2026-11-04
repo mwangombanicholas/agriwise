@@ -20,34 +20,34 @@ def load_model():
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- SMART BOUNCER (Balanced for real leaves) ---
+# --- ULTIMATE BOUNCER (Center Square Check) ---
 def is_it_a_leaf(image):
-    # 1. Resize image
-    img = image.resize((128, 128))
-    img_rgb = np.array(img)
+    # 1. Find the center of the image
+    width, height = image.size
+    min_dim = min(width, height)
+    left = (width - min_dim) / 2
+    top = (height - min_dim) / 2
+    right = (width + min_dim) / 2
+    bottom = (height + min_dim) / 2
     
-    # 2. Check for Plant Colors (Green, Yellow, Brown)
+    # 2. Crop out a perfect square in the center
+    center_square = image.crop((left, top, right, bottom))
+    
+    # 3. Resize and check the center square
+    img = center_square.resize((128, 128))
+    img_rgb = np.array(img)
     img_hsv = np.array(img.convert('HSV'))
+    
     hue = img_hsv[:, :, 0]
     sat = img_hsv[:, :, 1] 
     
-    # Count pixels that are green, yellow, or brown
+    # Check if the CENTER is green/yellow/brown
     plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
     total_pixels = 128 * 128
     color_score = (plant_pixels / total_pixels) * 100
     
-    # If less than 25% of the image is plant-colored, reject it
-    # (Lowered from 35% to 25% to accept more real leaves)
-    if color_score < 25:
-        return False
-        
-    # 3. Check for Texture
-    gray = np.mean(img_rgb, axis=2)
-    edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
-    texture_score = edges / total_pixels
-    
-    # If the image is completely smooth (like a screen or wall), reject it
-    if texture_score < 10:
+    # If the center square has less than 30% plant colors, it's a person/object
+    if color_score < 30:
         return False
         
     return True
@@ -70,7 +70,7 @@ with tab1:
         
         if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
-            st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
+            st.info("This does not look like a plant leaf. Please ensure the leaf fills the center of the photo.")
         else:
             try:
                 model = load_model()
