@@ -11,27 +11,32 @@ st.set_page_config(page_title="AgriWise", page_icon="🌽", layout="wide")
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
-# --- BACKGROUND IMAGE SETUP ---
+# --- BACKGROUND MEDIA SETUP ---
 bg_image_path = "cornfield.jpg"
-if os.path.exists(bg_image_path):
-    with open(bg_image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-    bg_url = f"data:image/jpeg;base64,{encoded_string}"
-else:
-    bg_url = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2070&auto=format&fit=crop"
+video_path = "weather_bg.mp4"
+
+# Helper function to encode images/videos to base64
+def get_base64(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
+
+bg_image_b64 = get_base64(bg_image_path)
+video_b64 = get_base64(video_path)
 
 # --- CUSTOM CSS ---
 st.markdown(f"""
 <style>
-    /* Main Background */
+    /* Main App Background (Cornfield) */
     .stApp {{
-        background-image: url("{bg_url}");
+        background-image: url("data:image/jpeg;base64,{bg_image_b64}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }}
     
-    /* Make the main container transparent so the image shows through */
+    /* Make the main container transparent */
     .block-container {{
         background: transparent !important;
         padding-top: 2rem !important;
@@ -51,7 +56,7 @@ st.markdown(f"""
     .feature-badge {{
         background-color: white;
         border-radius: 30px;
-        padding: 10px 20px;
+        padding: 12px 25px;
         margin-bottom: 15px;
         display: flex;
         align-items: center;
@@ -63,20 +68,20 @@ st.markdown(f"""
     }}
     
     .feature-badge span {{
-        margin-right: 10px;
+        margin-right: 15px;
         font-size: 1.3rem;
     }}
 
-    /* The right side white card */
-    .scan-card {{
+    /* The white cards */
+    .white-card {{
         background-color: white;
         padding: 2rem;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }}
 
-    /* Fix ALL text inside the white card to be readable */
-    .scan-card h2, .scan-card h3, .scan-card p, .scan-card span, .scan-card label, .scan-card div {{
+    /* Fix ALL text inside the white cards */
+    .white-card h1, .white-card h2, .white-card h3, .white-card p, .white-card span, .white-card label, .white-card div, .white-card strong {{
         color: #1b5e20 !important;
     }}
     
@@ -127,9 +132,9 @@ def is_it_a_leaf(image):
     if texture_score < 10: return False
     return True
 
-# --- SIDEBAR (Maize Theme) ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("<h1 style='text-align: center;'>🌽</h1>", unsafe_allow_html=True) # Maize Icon
+    st.markdown("<h1 style='text-align: center;'>🌽</h1>", unsafe_allow_html=True)
     st.markdown("### About AgriWise")
     st.write("Built by **Mzuzu University Students** for smallholder farmers.")
     st.markdown("---")
@@ -141,17 +146,16 @@ with st.sidebar:
 
 # --- MAIN UI LAYOUT ---
 
-# 1. The Big Title
 st.markdown('<div class="hero-title">Bringing Innovation to<br>Your Farming Journey.</div>', unsafe_allow_html=True)
 
-# 2. Tabs
 tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
+# ==========================================
+# TAB 1: CROP DIAGNOSIS (Cornfield Background)
+# ==========================================
 with tab1:
-    # Create two columns
     col_left, col_right = st.columns([1, 1.5], gap="large")
 
-    # LEFT COLUMN: Feature Badges
     with col_left:
         st.markdown("""
         <div class="feature-badge"><span>🌱</span> Better Growth</div>
@@ -160,10 +164,9 @@ with tab1:
         <div class="feature-badge"><span>🌍</span> Sustainable Future</div>
         """, unsafe_allow_html=True)
 
-    # RIGHT COLUMN: The Upload Card
     with col_right:
         st.markdown("""
-        <div class="scan-card">
+        <div class="white-card">
             <h2>📸 Scan Your Maize Crop</h2>
             <p>Take a clear, close-up photo of a single maize leaf to get an instant AI diagnosis.</p>
         </div>
@@ -207,7 +210,6 @@ with tab1:
                             
                         st.info(f"**Confidence:** {confidence:.1f}%")
                         
-                        # MAIZE SPECIFIC CHEMICALS
                         treatment_info = {
                             'healthy': {'chemical': 'No treatment needed', 'organic': 'Continue good practices'},
                             'common_rust': {'chemical': 'Azoxystrobin or Propiconazole fungicide', 'organic': 'Neem oil spray'},
@@ -224,9 +226,38 @@ with tab1:
                 except Exception as e:
                     st.error(f"Error analyzing image: {str(e)}")
 
+# ==========================================
+# TAB 2: CLIMATE ADVISORY (Video Background)
+# ==========================================
 with tab2:
-    # Use a white card for the weather too
-    st.markdown('<div class="scan-card">', unsafe_allow_html=True)
+    # Inject the video background ONLY for this tab using HTML/CSS
+    if video_b64:
+        st.markdown(f"""
+        <style>
+            /* Change the background to the video when tab2 is active */
+            .stApp {{
+                background-image: none !important;
+                background-color: transparent !important;
+            }}
+            #weather-video {{
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                min-width: 100%; 
+                min-height: 100%;
+                z-index: -1;
+                object-fit: cover;
+                opacity: 0.7; /* Dim the video slightly so text is readable */
+            }}
+        </style>
+        <video autoplay loop muted playsinline id="weather-video">
+            <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+        </video>
+        """, unsafe_allow_html=True)
+
+    # Weather Content inside a white card
+    st.markdown('<div class="white-card">', unsafe_allow_html=True)
+    
     st.header("Localized Climate Advisory")
     
     col_w1, col_w2 = st.columns(2)
@@ -253,4 +284,5 @@ with tab2:
     else: st.success(msg)
     
     st.info("📅 **Planting Calendar:**\n- **Maize:** Plant in November - December\n- **Harvest:** April - June")
+    
     st.markdown('</div>', unsafe_allow_html=True)
