@@ -4,8 +4,6 @@ from PIL import Image
 import os
 import requests
 import tensorflow as tf
-import base64
-import streamlit.components.v1 as components
 
 st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
@@ -39,6 +37,7 @@ def is_it_a_leaf(image):
     color_score = (plant_pixels / total_pixels) * 100
     
     # If less than 25% of the image is plant-colored, reject it
+    # (Lowered from 35% to 25% to accept more real leaves)
     if color_score < 25:
         return False
         
@@ -117,59 +116,7 @@ with tab1:
                 st.error(f"Error analyzing image: {str(e)}")
 
 with tab2:
-    # --- VIDEO BACKGROUND INJECTION ---
-    video_file = "weather_bg.mp4"
-    if os.path.exists(video_file):
-        with open(video_file, "rb") as f:
-            video_bytes = f.read()
-            encoded_video = base64.b64encode(video_bytes).decode()
-        
-        # We use CSS to make the video cover the background and place the header on top
-        video_html = f"""
-        <style>
-        .weather-container {{
-            position: relative;
-            width: 100%;
-            height: 300px;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }}
-        .weather-video {{
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-            opacity: 0.8;
-        }}
-        .weather-title {{
-            position: relative;
-            z-index: 1;
-            color: white;
-            font-size: 3rem;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-        }}
-        </style>
-        
-        <div class="weather-container">
-            <video autoplay loop muted playsinline class="weather-video">
-                <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
-            </video>
-            <div class="weather-title">⛅ Weather Advisory</div>
-        </div>
-        """
-        components.html(video_html, height=320)
-    else:
-        st.header("Weather Advisory")
-    
-    # --- YOUR ORIGINAL WEATHER LOGIC ---
+    st.header("Weather Advisory")
     district = st.selectbox("Select district", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
     weather_alerts = {
         "Mzuzu": ("No active alerts", "success"),
