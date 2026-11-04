@@ -44,9 +44,11 @@ st.markdown("**Supported crop:** 🌽 Maize (Corn)")
 
 tab1, tab2 = st.tabs(["📸 Disease Detection", "⛅ Weather Advisory"])
 
+# ================= TAB 1: ORIGINAL LAYOUT =================
 with tab1:
     st.header("Upload a photo of your maize leaf")
     uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
+    
     st.caption("⚠️ Note: This AI is trained for maize leaves. Photos of people or objects will be rejected.")
     
     if uploaded:
@@ -63,6 +65,7 @@ with tab1:
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
+                    
                     predictions = model.predict(img_array)
                     idx = np.argmax(predictions[0])
                     confidence = predictions[0][idx] * 100
@@ -91,6 +94,7 @@ with tab1:
                     }
                     key = result.replace('maize_', '')
                     info = treatment_info.get(key, treatment_info['healthy'])
+                    
                     st.subheader("💊 Treatment")
                     col1, col2 = st.columns(2)
                     col1.write(f"**Chemical:** {info['chemical']}")
@@ -98,25 +102,26 @@ with tab1:
             except Exception as e:
                 st.error(f"Error analyzing image: {str(e)}")
 
+# ================= TAB 2: VIDEO BACKGROUND =================
 with tab2:
-    # --- VIDEO BACKGROUND FOR WEATHER TAB ---
-    # We read the video file and convert it to base64
+    # 1. Read the video file
     video_file = "weather_bg.mp4"
     if os.path.exists(video_file):
         with open(video_file, "rb") as f:
             video_bytes = f.read()
             encoded_video = base64.b64encode(video_bytes).decode()
         
-        # HTML/CSS to make the video cover the background
+        # 2. HTML/CSS for the video background
         video_html = f"""
         <style>
         .video-container {{
             position: relative;
             width: 100%;
-            height: 600px;
+            height: 400px;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
         }}
         .video-bg {{
             position: absolute;
@@ -126,7 +131,7 @@ with tab2:
             height: 100%;
             object-fit: cover;
             z-index: 0;
-            opacity: 0.6;
+            opacity: 0.8;
         }}
         .content-overlay {{
             position: relative;
@@ -147,24 +152,16 @@ with tab2:
             
             <div class="content-overlay">
                 <h2>⛅ Weather Advisory</h2>
-                <p>Select your district to view the local forecast and agricultural alerts.</p>
+                <p>Select your district below to view local forecasts and agricultural alerts.</p>
             </div>
         </div>
         """
-        components.html(video_html, height=650)
+        components.html(video_html, height=420)
     
-    # Place the Streamlit widgets below the video
-    st.write("---")
-    col1, col2 = st.columns(2)
-    with col1:
-        district = st.selectbox("📍 Select your district", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
+    # 3. The actual weather logic (below the video)
+    st.header("Select District")
+    district = st.selectbox("Select district", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
     
-    with col2:
-        st.write("") # spacing
-        st.write("") # spacing
-        st.info("📅 Maize planting: November-December")
-
-    # Weather alerts logic
     weather_alerts = {
         "Mzuzu": ("No active alerts", "success"),
         "Mzimba": ("🌵 DRY SPELL ALERT: Irrigate if possible", "warning"),
@@ -177,3 +174,5 @@ with tab2:
     if alert_type == "error": st.error(msg)
     elif alert_type == "warning": st.warning(msg)
     else: st.success(msg)
+    
+    st.info("📅 Maize planting: November-December")
