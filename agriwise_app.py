@@ -10,21 +10,32 @@ import base64
 st.set_page_config(page_title="AgriWise | Smart Farming", page_icon="🌽", layout="wide", initial_sidebar_state="collapsed")
 
 # ==================== BACKGROUND IMAGE SETUP ====================
-# We use a high-quality corn field image as the background
-bg_image_url = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2070&auto=format&fit=crop"
+# Load the local image and convert to base64
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# We use try/except in case the image hasn't been uploaded yet
+try:
+    bg_img_base64 = get_base64_of_bin_file('cornfield.jpg')
+    bg_css = f'background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url("data:image/jpeg;base64,{bg_img_base64}");'
+except:
+    # Fallback just in case
+    bg_css = 'background-color: #1B5E20;'
 
 st.markdown(f"""
 <style>
     /* The Background Image */
     .stApp {{
-        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url("{bg_image_url}");
+        {bg_css}
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
         color: white;
     }}
     
-    /* Hide default Streamlit headers and footers */
+    /* Hide default Streamlit headers */
     #MainMenu {{visibility: hidden;}}
     header {{visibility: hidden;}}
     footer {{visibility: hidden;}}
@@ -35,19 +46,16 @@ st.markdown(f"""
         font-family: 'Helvetica Neue', sans-serif;
     }}
     
-    /* Hero Section (Like Image 1) */
+    /* Hero Section */
     .hero-container {{
-        padding: 4rem 2rem;
+        padding: 3rem 0rem;
         text-align: left;
-        max-width: 800px;
-        margin-top: 5vh;
     }}
     .hero-title {{
         font-size: 4rem;
         font-weight: 800;
         line-height: 1.1;
         margin-bottom: 1rem;
-        color: #ffffff !important;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }}
     .hero-subtitle {{
@@ -57,7 +65,7 @@ st.markdown(f"""
         max-width: 600px;
     }}
     
-    /* White Pill Cards (Like Image 2) */
+    /* White Pill Cards */
     .pill-card {{
         background-color: white;
         border-radius: 50px;
@@ -96,7 +104,6 @@ st.markdown(f"""
     .result-card h3, .result-card p, .result-card h4 {{
         color: #1B5E20 !important;
     }}
-    
 </style>
 """, unsafe_allow_html=True)
 
@@ -124,11 +131,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Create layout columns: Left for text/icons, Right for the upload tool
+# Create layout columns
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    # Recreating the "Healthy Crops" icons from Image 2
     st.markdown("""
     <div class="pill-card"><span>🌱</span><p>Better Growth</p></div>
     <div class="pill-card"><span>🛡️</span><p>Strong Protection</p></div>
@@ -137,7 +143,6 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    # Upload container
     st.markdown('<div class="upload-container">', unsafe_allow_html=True)
     st.markdown("<h3 style='color: #1B5E20 !important; margin-top:0;'>📸 Scan Your Maize Crop</h3>", unsafe_allow_html=True)
     uploaded = st.file_uploader("Upload a clear photo of a maize leaf", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
@@ -148,7 +153,6 @@ with col2:
 if uploaded:
     image = Image.open(uploaded).convert('RGB')
     
-    # Display results in a new section below
     res_col1, res_col2 = st.columns([1, 1.5])
     
     with res_col1:
@@ -213,14 +217,14 @@ if uploaded:
                     info = treatment_info.get(key, {'chemical': 'Consult expert', 'organic': 'Consult expert'})
                     
                     st.markdown(f"""
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <div style="background:white; padding:15px; border-radius:10px; flex:1;">
+                    <div style="display: flex; gap: 15px; margin-top: 15px;">
+                        <div style="background:white; padding:20px; border-radius:15px; flex:1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                             <h4 style="color:#1B5E20 !important; margin-top:0;">🧪 Chemical</h4>
-                            <p style="color:#333 !important; font-size:0.9rem;">{info['chemical']}</p>
+                            <p style="color:#333 !important; font-size:1rem;">{info['chemical']}</p>
                         </div>
-                        <div style="background:white; padding:15px; border-radius:10px; flex:1;">
+                        <div style="background:white; padding:20px; border-radius:15px; flex:1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                             <h4 style="color:#1B5E20 !important; margin-top:0;">🌿 Organic</h4>
-                            <p style="color:#333 !important; font-size:0.9rem;">{info['organic']}</p>
+                            <p style="color:#333 !important; font-size:1rem;">{info['organic']}</p>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
