@@ -7,9 +7,9 @@ import tensorflow as tf
 import base64
 
 # ==================== PAGE CONFIG ====================
-st.set_page_config(page_title="AgriWise | Smart Farming", page_icon="🌽", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="AgriWise | Smart Farming", page_icon="🌽", layout="wide", initial_sidebar_state="collapsed")
 
-# ==================== CUSTOM CSS & BACKGROUND ====================
+# ==================== BACKGROUND IMAGE SETUP ====================
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -17,15 +17,18 @@ def get_base64_of_bin_file(bin_file):
 
 try:
     bg_img_base64 = get_base64_of_bin_file('cornfield.jpg')
-    hero_bg = f'url("data:image/jpeg;base64,{bg_img_base64}")'
+    bg_css = f'background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url("data:image/jpeg;base64,{bg_img_base64}");'
 except:
-    hero_bg = 'linear-gradient(135deg, #1B5E20 0%, #4CAF50 100%)'
+    bg_css = 'background-color: #1B5E20;'
 
 st.markdown(f"""
 <style>
-    /* Clean, light background for the whole app */
+    /* The Full Screen Background Image */
     .stApp {{
-        background-color: #f8f9fa;
+        {bg_css}
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
     }}
     
     /* Hide default Streamlit headers */
@@ -33,51 +36,62 @@ st.markdown(f"""
     header {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     
-    /* HERO BANNER - Using the Cornfield Image */
-    .hero-banner {{
-        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), {hero_bg};
-        background-size: cover;
-        background-position: center;
-        padding: 4rem 2rem;
-        border-radius: 20px;
-        color: white;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }}
-    .hero-banner h1 {{
-        font-size: 3.5rem;
-        font-weight: 800;
+    /* Global Text Colors (White for the dark background) */
+    h1, h2, h3, h4, h5, h6, p, span, div {{
         color: white !important;
-        margin-bottom: 0.5rem;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
-    }}
-    .hero-banner p {{
-        font-size: 1.3rem;
-        color: #f0f0f0 !important;
-        max-width: 700px;
-        margin: 0 auto;
-        text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+        font-family: 'Helvetica Neue', sans-serif;
     }}
     
-    /* White Cards */
-    .white-card {{
-        background: white;
+    /* Hero Section */
+    .hero-title {{
+        font-size: 4rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    }}
+    
+    /* Frosted Glass Cards for readability */
+    .glass-card {{
+        background: rgba(255, 255, 255, 0.95);
         padding: 2rem;
         border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         margin-bottom: 1.5rem;
     }}
     
-    /* Global Text (Dark for readability) */
-    h1, h2, h3, h4, h5, h6, p, span, div {{
-        color: #2c3e50;
+    /* Force text inside glass cards to be dark */
+    .glass-card h1, .glass-card h2, .glass-card h3, .glass-card h4, .glass-card p, .glass-card span, .glass-card li {{
+        color: #1B5E20 !important;
     }}
     
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {{
-        background-color: #ffffff;
-        border-right: 1px solid #e0e0e0;
+    /* White Pill Cards (from Image 2) */
+    .pill-card {{
+        background-color: white;
+        border-radius: 50px;
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        max-width: 300px;
+    }}
+    .pill-card p {{
+        color: #1B5E20 !important;
+        font-weight: bold;
+        margin: 0;
+        margin-left: 15px;
+        font-size: 1.1rem;
+    }}
+    
+    /* Tab Styling (Make tabs visible over the dark background) */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white !important;
+        background-color: rgba(0,0,0,0.5);
+        padding: 10px 20px;
+        border-radius: 10px;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -96,56 +110,43 @@ def load_model():
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# ==================== SIDEBAR NAVIGATION ====================
-with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2488/2488658.png", width=80)
-    st.title("AgriWise")
-    st.markdown("---")
-    
-    # Custom Navigation (This acts like the buttons you wanted)
-    page = st.radio(
-        "Navigation Menu",
-        ["📸 Crop Diagnosis", "⛅ Climate Advisory", "ℹ️ About Us"]
-    )
-    
-    st.markdown("---")
-    st.info("Built by Mzuzu University Students for the SAVE Project.")
+# ==================== HEADER ====================
+st.markdown('<h1 class="hero-title">Bringing Innovation to Your Farming Journey.</h1>', unsafe_allow_html=True)
 
-# ==================== PAGE 1: CROP DIAGNOSIS ====================
-if page == "📸 Crop Diagnosis":
-    # HERO BANNER
-    st.markdown("""
-    <div class="hero-banner">
-        <h1>Bringing Innovation to Your Farming Journey.</h1>
-        <p>Empowering farmers with instant AI crop diagnosis and climate alerts. Scan your maize leaves today.</p>
-    </div>
-    """, unsafe_allow_html=True)
+# ==================== MAIN TABS ====================
+tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
-    col1, col2 = st.columns([1, 1])
+# ==================== TAB 1: DIAGNOSIS ====================
+with tab1:
+    col1, col2 = st.columns([1, 1.2])
     
     with col1:
-        st.markdown("### 📤 Upload Crop Image")
-        uploaded = st.file_uploader("Take a clear, close-up photo of the maize leaf.", type=['jpg', 'jpeg', 'png'])
-        
-    with col2:
-        st.markdown("### 🌱 Why Use AgriWise?")
-        st.success("✅ Early Disease Detection")
-        st.success("✅ 96% Accurate AI Model")
-        st.success("✅ Instant Treatment Plans")
+        st.markdown("""
+        <div class="pill-card"><span>🌱</span><p>Better Growth</p></div>
+        <div class="pill-card"><span>🛡️</span><p>Strong Protection</p></div>
+        <div class="pill-card"><span>📈</span><p>Higher Yield</p></div>
+        <div class="pill-card"><span>🌍</span><p>Sustainable Future</p></div>
+        """, unsafe_allow_html=True)
 
+    with col2:
+        # Uploader inside a glass card
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top:0;'>📸 Scan Your Maize Crop</h3>", unsafe_allow_html=True)
+        uploaded = st.file_uploader("Upload a clear photo of a maize leaf", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ==================== PROCESSING ====================
     if uploaded:
         image = Image.open(uploaded).convert('RGB')
+        res_col1, res_col2 = st.columns([1, 1.5])
         
-        st.markdown("---")
-        col_img, col_res = st.columns([1, 1.5])
-        
-        with col_img:
-            st.image(image, caption="Uploaded Crop Image", use_column_width=True)
+        with res_col1:
+            st.image(image, caption="Your Crop", use_column_width=True)
             
-        with col_res:
+        with res_col2:
             try:
                 model = load_model()
-                with st.spinner("🧠 Analyzing leaf..."):
+                with st.spinner("🧠 AI is analyzing the leaf..."):
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
@@ -165,26 +166,29 @@ if page == "📸 Crop Diagnosis":
                     display = display_names[result]
                     
                     if 'healthy' in result:
-                        bg_color, border_color, icon = "#E8F5E9", "#2E7D32", "✅"
+                        border_color = "#2E7D32"
+                        icon = "✅"
                         msg = "Your crop is in good health! Keep up the good farming practices."
                     elif confidence < 60:
-                        bg_color, border_color, icon = "#FFEBEE", "#C62828", "❌"
-                        msg = "The AI could not confidently identify a maize leaf here."
+                        border_color = "#C62828"
+                        icon = "❌"
+                        msg = "The AI could not confidently identify a maize leaf here. Please ensure you uploaded a clear photo."
                         display = "Unrecognized Image"
                     else:
-                        bg_color, border_color, icon = "#FFF3E0", "#EF6C00", "⚠️"
+                        border_color = "#EF6C00"
+                        icon = "⚠️"
                         msg = "Disease detected. Follow the treatment plan below immediately."
 
-                    # RESULT CARD
+                    # Result Glass Card
                     st.markdown(f"""
-                    <div class="white-card" style="background-color: {bg_color}; border-left: 8px solid {border_color};">
-                        <h3 style="margin-top:0; color: {border_color} !important;">{icon} {display}</h3>
-                        <p style="font-size:1.2rem; color: #333 !important;"><strong>Confidence:</strong> {confidence:.1f}%</p>
-                        <p style="color: #333 !important;">{msg}</p>
+                    <div class="glass-card" style="border-left: 8px solid {border_color}; padding: 1.5rem;">
+                        <h3 style="margin-top:0;">{icon} {display}</h3>
+                        <p style="font-size:1.2rem;"><strong>Confidence:</strong> {confidence:.1f}%</p>
+                        <p>{msg}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # TREATMENTS
+                    # Treatments
                     if 'healthy' not in result and confidence >= 60:
                         treatment_info = {
                             'common_rust': {'chemical': 'Azoxystrobin fungicide (K8,000/ha)', 'organic': 'Neem oil spray (2 tsp/L)'},
@@ -199,30 +203,27 @@ if page == "📸 Crop Diagnosis":
                         
                         with t1:
                             st.markdown(f"""
-                            <div class="white-card" style="border-top: 5px solid #2196F3;">
-                                <h4 style="color: #2196F3 !important;">🧪 Chemical Treatment</h4>
-                                <p style="color: #333 !important;">{info['chemical']}</p>
+                            <div class="glass-card" style="border-top: 5px solid #2196F3; padding: 1.5rem;">
+                                <h4>🧪 Chemical Treatment</h4>
+                                <p>{info['chemical']}</p>
                             </div>
                             """, unsafe_allow_html=True)
                             
                         with t2:
                             st.markdown(f"""
-                            <div class="white-card" style="border-top: 5px solid #4CAF50;">
-                                <h4 style="color: #4CAF50 !important;">🌿 Organic Alternative</h4>
-                                <p style="color: #333 !important;">{info['organic']}</p>
+                            <div class="glass-card" style="border-top: 5px solid #4CAF50; padding: 1.5rem;">
+                                <h4>🌿 Organic Alternative</h4>
+                                <p>{info['organic']}</p>
                             </div>
                             """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Error: {e}")
 
-# ==================== PAGE 2: CLIMATE ADVISORY ====================
-elif page == "⛅ Climate Advisory":
-    st.markdown("""
-    <div class="hero-banner" style="padding: 2rem;">
-        <h1>⛅ Climate Advisory</h1>
-        <p>Localized weather alerts to protect your harvest.</p>
-    </div>
-    """, unsafe_allow_html=True)
+# ==================== TAB 2: WEATHER ====================
+with tab2:
+    # Weather tab inside a large glass card so it's readable
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.markdown("### ⛅ Localized Climate Advisory")
     
     districts = {
         "Mzuzu": {"temp": "24°C", "rain": "Moderate", "alert": "none"},
@@ -232,8 +233,7 @@ elif page == "⛅ Climate Advisory":
         "Nkhata Bay": {"temp": "27°C", "rain": "Very High", "alert": "flood"}
     }
     
-    st.markdown("### 📍 Select Your District")
-    selected = st.selectbox("", list(districts.keys()), label_visibility="collapsed")
+    selected = st.selectbox("📍 Select District", list(districts.keys()))
     
     if selected:
         data = districts[selected]
@@ -246,7 +246,6 @@ elif page == "⛅ Climate Advisory":
         with m3:
             st.metric(label="📅 Season", value="Rainy / Growing" if data["alert"] != "dry" else "Dry")
             
-        st.markdown("### ⚠️ Active Alerts")
         if data["alert"] == "flood":
             st.error("🚨 **FLOOD ALERT:** Heavy rains expected in the next 48 hours. Move livestock to higher ground.")
         elif data["alert"] == "dry":
@@ -254,35 +253,9 @@ elif page == "⛅ Climate Advisory":
         else:
             st.success("✅ **No active weather alerts** for your area.")
             
-        st.markdown("### 📅 Planting Calendar")
         st.info("""
+        **📅 Planting Calendar:**
         * **🌽 Maize:** Plant in November - December
         * **🌾 Harvest:** April - June
-        * **🌱 Fertilizer:** Apply 3-4 weeks after planting
         """)
-
-# ==================== PAGE 3: ABOUT US ====================
-elif page == "ℹ️ About Us":
-    st.markdown("""
-    <div class="hero-banner" style="padding: 2rem;">
-        <h1>About AgriWise</h1>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="white-card">
-        <h2>Our Mission</h2>
-        <p>AgriWise is an AI-powered web application designed to help smallholder farmers in Malawi detect maize diseases early and receive actionable treatment advice.</p>
-        
-        <h3>The Team</h3>
-        <ul>
-            <li><strong>Nicholas Mwangomba</strong> - AI Model Development</li>
-            <li><strong>Blessings Kalinde</strong> - Data Processing</li>
-            <li><strong>Harold Phiri</strong> - Research</li>
-            <li><strong>Bright Msiska</strong> - App Development</li>
-        </ul>
-        
-        <h3>Supported by</h3>
-        <p>The World Bank SAVE Project and Mzuzu University.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
