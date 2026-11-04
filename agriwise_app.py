@@ -15,7 +15,6 @@ MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&ex
 bg_image_path = "cornfield.jpg"
 video_path = "weather_bg.mp4"
 
-# Helper function to encode images/videos to base64
 def get_base64(file_path):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -28,7 +27,7 @@ video_b64 = get_base64(video_path)
 # --- CUSTOM CSS ---
 st.markdown(f"""
 <style>
-    /* Main App Background (Cornfield) */
+    /* Default background (Cornfield) */
     .stApp {{
         background-image: url("data:image/jpeg;base64,{bg_image_b64}");
         background-size: cover;
@@ -52,7 +51,7 @@ st.markdown(f"""
         margin-bottom: 2rem;
     }}
 
-    /* The 4 feature badges on the left */
+    /* The 4 feature badges */
     .feature-badge {{
         background-color: white;
         border-radius: 30px;
@@ -99,6 +98,18 @@ st.markdown(f"""
     }}
     [data-testid="stSidebar"] * {{
         color: #1b5e20 !important;
+    }}
+    
+    /* Hide video by default */
+    #weather-video {{
+        display: none;
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%; 
+        min-height: 100%;
+        z-index: -1;
+        object-fit: cover;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -148,10 +159,18 @@ with st.sidebar:
 
 st.markdown('<div class="hero-title">Bringing Innovation to<br>Your Farming Journey.</div>', unsafe_allow_html=True)
 
+# Inject the video tag but keep it hidden
+if video_b64:
+    st.markdown(f"""
+    <video autoplay loop muted playsinline id="weather-video">
+        <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+    </video>
+    """, unsafe_allow_html=True)
+
 tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
 # ==========================================
-# TAB 1: CROP DIAGNOSIS (Cornfield Background)
+# TAB 1: CROP DIAGNOSIS (Cornfield Image)
 # ==========================================
 with tab1:
     col_left, col_right = st.columns([1, 1.5], gap="large")
@@ -230,32 +249,17 @@ with tab1:
 # TAB 2: CLIMATE ADVISORY (Video Background)
 # ==========================================
 with tab2:
-    # Inject the video background ONLY for this tab using HTML/CSS
-    if video_b64:
-        st.markdown(f"""
-        <style>
-            /* Change the background to the video when tab2 is active */
-            .stApp {{
-                background-image: none !important;
-                background-color: transparent !important;
-            }}
-            #weather-video {{
-                position: fixed;
-                right: 0;
-                bottom: 0;
-                min-width: 100%; 
-                min-height: 100%;
-                z-index: -1;
-                object-fit: cover;
-                opacity: 0.7; /* Dim the video slightly so text is readable */
-            }}
-        </style>
-        <video autoplay loop muted playsinline id="weather-video">
-            <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
-        </video>
-        """, unsafe_allow_html=True)
+    # This script runs when Tab 2 is clicked, swapping the background
+    st.markdown("""
+    <script>
+        var vid = window.parent.document.getElementById("weather-video");
+        if (vid) {
+            vid.style.display = "block";
+            window.parent.document.querySelector('.stApp').style.backgroundImage = "none";
+        }
+    </script>
+    """, unsafe_allow_html=True)
 
-    # Weather Content inside a white card
     st.markdown('<div class="white-card">', unsafe_allow_html=True)
     
     st.header("Localized Climate Advisory")
