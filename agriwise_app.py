@@ -27,7 +27,7 @@ video_b64 = get_base64(video_path)
 # --- CUSTOM CSS ---
 st.markdown(f"""
 <style>
-    /* Default background (Cornfield) */
+    /* Main App Background (Cornfield for Tab 1) */
     .stApp {{
         background-image: url("data:image/jpeg;base64,{bg_image_b64}");
         background-size: cover;
@@ -73,10 +73,12 @@ st.markdown(f"""
 
     /* The white cards */
     .white-card {{
-        background-color: white;
+        background-color: rgba(255, 255, 255, 0.95);
         padding: 2rem;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        position: relative;
+        z-index: 10;
     }}
 
     /* Fix ALL text inside the white cards */
@@ -99,17 +101,27 @@ st.markdown(f"""
     [data-testid="stSidebar"] * {{
         color: #1b5e20 !important;
     }}
+
+    /* --- TAB 2 VIDEO BACKGROUND WRAPPER --- */
+    .video-container {{
+        position: relative;
+        width: 100%;
+        min-height: 600px;
+        border-radius: 15px;
+        overflow: hidden;
+    }}
     
-    /* Hide video by default */
-    #weather-video {{
-        display: none;
-        position: fixed;
-        right: 0;
-        bottom: 0;
-        min-width: 100%; 
+    .video-container video {{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
         min-height: 100%;
-        z-index: -1;
-        object-fit: cover;
+        width: auto;
+        height: auto;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+        opacity: 0.8;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -159,18 +171,10 @@ with st.sidebar:
 
 st.markdown('<div class="hero-title">Bringing Innovation to<br>Your Farming Journey.</div>', unsafe_allow_html=True)
 
-# Inject the video tag but keep it hidden
-if video_b64:
-    st.markdown(f"""
-    <video autoplay loop muted playsinline id="weather-video">
-        <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
-    </video>
-    """, unsafe_allow_html=True)
-
 tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
 # ==========================================
-# TAB 1: CROP DIAGNOSIS (Cornfield Image)
+# TAB 1: CROP DIAGNOSIS
 # ==========================================
 with tab1:
     col_left, col_right = st.columns([1, 1.5], gap="large")
@@ -246,24 +250,24 @@ with tab1:
                     st.error(f"Error analyzing image: {str(e)}")
 
 # ==========================================
-# TAB 2: CLIMATE ADVISORY (Video Background)
+# TAB 2: CLIMATE ADVISORY (Video Wrapper)
 # ==========================================
 with tab2:
-    # This script runs when Tab 2 is clicked, swapping the background
-    st.markdown("""
-    <script>
-        var vid = window.parent.document.getElementById("weather-video");
-        if (vid) {
-            vid.style.display = "block";
-            window.parent.document.querySelector('.stApp').style.backgroundImage = "none";
-        }
-    </script>
+    # We wrap the whole tab in a container that holds the video
+    st.markdown(f"""
+    <div class="video-container">
+        <video autoplay loop muted playsinline>
+            <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+        </video>
+        <div class="white-card" style="margin: 2rem;">
+            <h2 style="margin-top:0;">⛅ Localized Climate Advisory</h2>
+            <p>Select your district to view active weather alerts and planting calendars.</p>
+        </div>
+    </div>
     """, unsafe_allow_html=True)
-
-    st.markdown('<div class="white-card">', unsafe_allow_html=True)
     
-    st.header("Localized Climate Advisory")
-    
+    # Put the interactive elements outside the HTML block (Streamlit requirement)
+    # We use a container to place them visually on top
     col_w1, col_w2 = st.columns(2)
     with col_w1:
         district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
@@ -288,5 +292,3 @@ with tab2:
     else: st.success(msg)
     
     st.info("📅 **Planting Calendar:**\n- **Maize:** Plant in November - December\n- **Harvest:** April - June")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
