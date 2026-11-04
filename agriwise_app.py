@@ -12,17 +12,15 @@ MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
 # --- BACKGROUND IMAGE SETUP ---
-# Looks for the cornfield.jpg you uploaded
 bg_image_path = "cornfield.jpg"
 if os.path.exists(bg_image_path):
     with open(bg_image_path, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
     bg_url = f"data:image/jpeg;base64,{encoded_string}"
 else:
-    # Fallback web image if the file isn't found
     bg_url = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2070&auto=format&fit=crop"
 
-# --- CUSTOM CSS FOR PROFESSIONAL DASHBOARD ---
+# --- CUSTOM CSS TO FIX THE TEXT AND LAYOUT ---
 st.markdown(f"""
 <style>
     /* Main Background */
@@ -35,8 +33,8 @@ st.markdown(f"""
     
     /* Glassmorphism container for the main content */
     .block-container {{
-        background: rgba(255, 255, 255, 0.88);
-        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.92); /* Made slightly more opaque for readability */
+        backdrop-filter: blur(12px);
         border-radius: 20px;
         padding: 2rem 3rem;
         margin-top: 2rem;
@@ -44,30 +42,33 @@ st.markdown(f"""
         border: 1px solid rgba(255, 255, 255, 0.18);
     }}
     
-    /* Green Branding for Headers */
-    h1, h2, h3 {{
+    /* Force ALL text to be dark so it's readable on the white background */
+    h1, h2, h3, h4, p, span, label, div {{
         color: #1b5e20 !important;
         font-family: 'Helvetica Neue', sans-serif;
+    }}
+    
+    /* Fix the File Uploader Box */
+    [data-testid="stFileUploader"] {{
+        background-color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 2px dashed #2e7d32;
     }}
     
     /* Professional Buttons */
     .stButton>button {{
         background-color: #2e7d32;
-        color: white;
+        color: white !important;
         border-radius: 8px;
         border: none;
         padding: 0.5rem 1rem;
         font-weight: bold;
-        transition: 0.3s;
     }}
-    .stButton>button:hover {{
-        background-color: #1b5e20;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }}
-
+    
     /* Sidebar Styling */
     [data-testid="stSidebar"] {{
-        background-color: rgba(240, 248, 240, 0.95);
+        background-color: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(5px);
     }}
 </style>
@@ -104,7 +105,6 @@ def is_it_a_leaf(image):
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2913/2913465.png", width=80)
     st.markdown("### 🌱 About AgriWise")
     st.write("Built by **Mzuzu University Students** for smallholder farmers.")
     st.markdown("---")
@@ -119,11 +119,13 @@ st.title("🌾 AgriWise Dashboard")
 st.markdown("#### AI-Powered Crop Health & Climate Advisor")
 st.markdown("---")
 
-tab1, tab2 = st.tabs(["📸 Disease Detection", "⛅ Weather Advisory"])
+tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
 with tab1:
-    st.header("Upload a photo of your maize leaf")
-    uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
+    st.header("Scan Your Maize Crop")
+    st.markdown("Take a clear, close-up photo of a single maize leaf.")
+    
+    uploaded = st.file_uploader("Upload an image (JPG, PNG)", type=['jpg', 'jpeg', 'png'])
     
     st.caption("⚠️ Note: This AI is trained for maize leaves. Photos of people or objects will be rejected.")
     
@@ -184,25 +186,32 @@ with tab1:
                     st.error(f"Error analyzing image: {str(e)}")
 
 with tab2:
-    st.header("Local Weather & Climate Advisory")
+    st.header("Localized Climate Advisory")
     
     col_w1, col_w2 = st.columns(2)
     with col_w1:
         district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
     
     weather_alerts = {
-        "Mzuzu": ("No active alerts", "success"),
+        "Mzuzu": ("No active weather alerts for your area.", "success"),
         "Mzimba": ("🌵 DRY SPELL ALERT: Irrigate if possible", "warning"),
         "Karonga": ("🚨 FLOOD ALERT: Heavy rains expected", "error"),
-        "Rumphi": ("No active alerts", "success"),
+        "Rumphi": ("No active weather alerts for your area.", "success"),
         "Nkhata Bay": ("🚨 FLOOD ALERT: Heavy rains expected", "error")
     }
     
-    msg, alert_type = weather_alerts.get(district, ("No active alerts", "success"))
+    msg, alert_type = weather_alerts.get(district, ("No active weather alerts for your area.", "success"))
     
     st.markdown("---")
+    
+    # Weather Metrics
+    m1, m2, m3 = st.columns(3)
+    m1.metric("🌡️ Temperature", "24°C")
+    m2.metric("🌧️ Rainfall", "Moderate")
+    m3.metric("📅 Season", "Rainy / Growing")
+
     if alert_type == "error": st.error(msg)
     elif alert_type == "warning": st.warning(msg)
     else: st.success(msg)
     
-    st.info("📅 **Farming Calendar:** Maize planting is best between November and December. Harvest begins in April to June.")
+    st.info("📅 **Planting Calendar:**\n- **Maize:** Plant in November - December\n- **Harvest:** April - June")
