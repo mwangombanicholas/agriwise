@@ -20,7 +20,7 @@ if os.path.exists(bg_image_path):
 else:
     bg_url = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2070&auto=format&fit=crop"
 
-# --- CUSTOM CSS TO FIX THE TEXT AND LAYOUT ---
+# --- CUSTOM CSS TO FIX THE WHITE BACKGROUND ---
 st.markdown(f"""
 <style>
     /* Main Background */
@@ -31,18 +31,16 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
     
-    /* Glassmorphism container for the main content */
+    /* SOLID WHITE container for the main content */
     .block-container {{
-        background: rgba(255, 255, 255, 0.92); /* Made slightly more opaque for readability */
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
+        background: #ffffff !important; /* Solid white to hide the background image */
+        border-radius: 15px;
         padding: 2rem 3rem;
         margin-top: 2rem;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Strong shadow to make it pop */
     }}
     
-    /* Force ALL text to be dark so it's readable on the white background */
+    /* Force ALL text to be dark green so it's readable on white */
     h1, h2, h3, h4, p, span, label, div {{
         color: #1b5e20 !important;
         font-family: 'Helvetica Neue', sans-serif;
@@ -50,8 +48,8 @@ st.markdown(f"""
     
     /* Fix the File Uploader Box */
     [data-testid="stFileUploader"] {{
-        background-color: white;
-        padding: 1rem;
+        background-color: #f8f9fa;
+        padding: 1.5rem;
         border-radius: 10px;
         border: 2px dashed #2e7d32;
     }}
@@ -66,10 +64,10 @@ st.markdown(f"""
         font-weight: bold;
     }}
     
-    /* Sidebar Styling */
+    /* Sidebar Styling - Solid White */
     [data-testid="stSidebar"] {{
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(5px);
+        background-color: #ffffff !important;
+        border-right: 2px solid #2e7d32;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -115,10 +113,10 @@ with st.sidebar:
     st.markdown("- Healthy Maize\n- Common Rust\n- Cercospora Leaf Spot\n- Northern Leaf Blight")
 
 # --- MAIN UI ---
-st.title("🌾 AgriWise Dashboard")
-st.markdown("#### AI-Powered Crop Health & Climate Advisor")
-st.markdown("---")
+# Adding a clean title outside the white box for a modern look
+st.markdown("<h2 style='text-align: center; color: white !important; text-shadow: 2px 2px 4px #000000;'>Bringing Innovation to Your Farming Journey</h2>", unsafe_allow_html=True)
 
+# The white block starts here
 tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
 with tab1:
@@ -204,7 +202,6 @@ with tab2:
     
     st.markdown("---")
     
-    # Weather Metrics
     m1, m2, m3 = st.columns(3)
     m1.metric("🌡️ Temperature", "24°C")
     m2.metric("🌧️ Rainfall", "Moderate")
