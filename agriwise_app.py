@@ -5,54 +5,46 @@ import os
 import requests
 import tensorflow as tf
 
-st.set_page_config(page_title="AgriWise", page_icon="🌽", layout="wide")
+st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
-@st.cache_resource
+# 1. STRONGER MODEL LOADING
+@st.cache_resource(show_spinner=False)
 def load_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading AI model..."):
+        with st.spinner("Downloading AI model (61MB) for the first time... Please wait."):
             response = requests.get(MODEL_URL, stream=True)
             with open(MODEL_PATH, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk: f.write(chunk)
     return tf.keras.models.load_model(MODEL_PATH)
 
-# --- SMART BOUNCER ---
+# 2. SMARTER BOUNCER (Looks at the WHOLE image, not just the center)
 def is_it_a_leaf(image):
-    # 1. Resize to speed up processing
     img = image.resize((128, 128))
     img_rgb = np.array(img)
     
-    # 2. Check for Plant Colors (Green, Yellow, Brown)
+    # Check colors
     img_hsv = np.array(img.convert('HSV'))
     hue = img_hsv[:, :, 0]
     sat = img_hsv[:, :, 1] 
-    
-    # A leaf will have a lot of saturated green/yellow/brown pixels
-    plant_pixels = np.sum(((hue >= 20) & (hue <= 95)) & (sat > 50))
+    plant_pixels = np.sum(((hue >= 20) & (hue <= 95)) & (sat > 40)) # Lowered sat to allow sick/light leaves
     total_pixels = 128 * 128
     color_score = (plant_pixels / total_pixels) * 100
     
-    # If less than 35% of the image is plant-colored, reject it
-    if color_score < 35:
-        return False
-        
-    # 3. Check for Texture (Leaves have edges, clear backgrounds don't)
-    # Calculate the difference between neighboring pixels
+    # Check texture
     gray = np.mean(img_rgb, axis=2)
     edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
     texture_score = edges / total_pixels
     
-    # If the image is too smooth (like a wall or a document), reject it
-    if texture_score < 15:
+    # Must have at least 25% plant colors and some texture
+    if color_score < 25 or texture_score < 10:
         return False
-        
     return True
 
-st.title("🌽 AgriWise")
+st.title("🌾 AgriWise")
 st.markdown("### AI-Powered Crop Health Advisor")
 st.markdown("**Supported crop:** 🌽 Maize (Corn) | **Model Accuracy:** 96%")
 
@@ -62,7 +54,6 @@ with tab1:
     st.header("Upload a photo of your maize leaf")
     uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
     
-    # Adding the disclaimer for the judges
     st.caption("⚠️ Note: This AI is trained specifically for maize leaves. Photos of people, animals, or objects will be rejected.")
     
     if uploaded:
@@ -71,11 +62,13 @@ with tab1:
         
         if not is_it_a_leaf(image):
             st.error("❌ **Invalid Image Detected.**")
-            st.info("This does not look like a plant leaf. Please take a close-up photo where the leaf fills the center of the screen.")
+            st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
         else:
             try:
+                # Load model
+                model = load_model()
+                
                 with st.spinner("Analyzing crop..."):
-                    model = load_model()
                     img = image.resize((128, 128))
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
@@ -114,7 +107,9 @@ with tab1:
                     col1.write(f"**Chemical:** {info['chemical']}")
                     col2.write(f"**Organic:** {info['organic']}")
             except Exception as e:
-                st.error("Failed to load the AI model. Please refresh and try again.")
+                # If it fails, show the actual error instead of hiding in Demo Mode
+                st.error(f"Error analyzing image: {str(e)}")
+                st.warning("The model is taking too long to load. Please refresh the page and try again.")
 
 with tab2:
     st.header("Weather Advisory")
