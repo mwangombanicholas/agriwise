@@ -6,75 +6,87 @@ import requests
 import tensorflow as tf
 import base64
 
-st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="AgriWise", page_icon="🌾", layout="wide")
 
-# --- LOAD BACKGROUND IMAGE AS BASE64 ---
-def get_base64_of_bin_file(bin_file):
-    try:
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except:
-        return ""
+MODEL_PATH = "agriwise_model.h5"
+MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
 
-bg_img = get_base64_of_bin_file('confield.jpg')
+# --- BACKGROUND IMAGE SETUP ---
+# Looks for the cornfield.jpg you uploaded
+bg_image_path = "cornfield.jpg"
+if os.path.exists(bg_image_path):
+    with open(bg_image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    bg_url = f"data:image/jpeg;base64,{encoded_string}"
+else:
+    # Fallback web image if the file isn't found
+    bg_url = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2070&auto=format&fit=crop"
 
-# --- CUSTOM CSS FOR THE UI ---
+# --- CUSTOM CSS FOR PROFESSIONAL DASHBOARD ---
 st.markdown(f"""
 <style>
-    /* Background Image */
+    /* Main Background */
     .stApp {{
-        background-image: url("data:image/jpg;base64,{bg_img}");
+        background-image: url("{bg_url}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }}
     
-    /* Main Title */
-    .main-title {{
-        color: white;
-        font-size: 3.5rem;
-        font-weight: 700;
-        margin-bottom: 0px;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    /* Glassmorphism container for the main content */
+    .block-container {{
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem 3rem;
+        margin-top: 2rem;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
     }}
     
-    /* Hide standard Streamlit header */
-    header {{visibility: hidden;}}
-    
-    /* Style the uploader box to look dark */
-    [data-testid="stFileUploader"] {{
-        background-color: rgba(30, 30, 30, 0.8);
-        border-radius: 10px;
-        padding: 10px;
+    /* Green Branding for Headers */
+    h1, h2, h3 {{
+        color: #1b5e20 !important;
+        font-family: 'Helvetica Neue', sans-serif;
     }}
     
-    /* Tab text color */
-    .stTabs [data-baseweb="tab"] {{
+    /* Professional Buttons */
+    .stButton>button {{
+        background-color: #2e7d32;
         color: white;
-        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-weight: bold;
+        transition: 0.3s;
+    }}
+    .stButton>button:hover {{
+        background-color: #1b5e20;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }}
+
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {{
+        background-color: rgba(240, 248, 240, 0.95);
+        backdrop-filter: blur(5px);
     }}
 </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER SECTION ---
-st.markdown('<p class="main-title">Bringing Innovation to Your Farming Journey.</p>', unsafe_allow_html=True)
-st.write("") # Spacing
-
-# --- MODEL LOADING ---
-MODEL_PATH = "agriwise_model.h5"
-
+# --- FUNCTIONS ---
 @st.cache_resource
 def load_model():
-    if os.path.exists(MODEL_PATH):
-        return tf.keras.models.load_model(MODEL_PATH)
-    return None
+    if not os.path.exists(MODEL_PATH):
+        with st.spinner("Downloading AI model..."):
+            response = requests.get(MODEL_URL, stream=True)
+            with open(MODEL_PATH, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk: f.write(chunk)
+    return tf.keras.models.load_model(MODEL_PATH)
 
-# --- BOUNCER LOGIC ---
 def is_it_a_leaf(image):
     img = image.resize((128, 128))
     img_rgb = np.array(img)
-    
     img_hsv = np.array(img.convert('HSV'))
     hue = img_hsv[:, :, 0]
     sat = img_hsv[:, :, 1] 
@@ -82,53 +94,53 @@ def is_it_a_leaf(image):
     plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
     total_pixels = 128 * 128
     color_score = (plant_pixels / total_pixels) * 100
-    
-    if color_score < 25:
-        return False
+    if color_score < 25: return False
         
     gray = np.mean(img_rgb, axis=2)
     edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
     texture_score = edges / total_pixels
-    
-    if texture_score < 10:
-        return False
-        
+    if texture_score < 10: return False
     return True
 
-# --- TABS ---
-tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
+# --- SIDEBAR ---
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/2913/2913465.png", width=80)
+    st.markdown("### 🌱 About AgriWise")
+    st.write("Built by **Mzuzu University Students** for smallholder farmers.")
+    st.markdown("---")
+    st.markdown("**Supported Crop:** 🌽 Maize (Corn)")
+    st.markdown("**Model Accuracy:** 96%")
+    st.markdown("---")
+    st.markdown("#### 🔍 Detects:")
+    st.markdown("- Healthy Maize\n- Common Rust\n- Cercospora Leaf Spot\n- Northern Leaf Blight")
+
+# --- MAIN UI ---
+st.title("🌾 AgriWise Dashboard")
+st.markdown("#### AI-Powered Crop Health & Climate Advisor")
+st.markdown("---")
+
+tab1, tab2 = st.tabs(["📸 Disease Detection", "⛅ Weather Advisory"])
 
 with tab1:
-    col1, col2 = st.columns([1, 2])
+    st.header("Upload a photo of your maize leaf")
+    uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
     
-    with col1:
-        st.markdown("""
-        <div style="background-color: white; border-radius: 30px; padding: 10px 20px; margin-bottom: 10px; color: #2e7d32; font-weight: bold; display: flex; align-items: center;">
-            🌱 Better Growth
-        </div>
-        <div style="background-color: white; border-radius: 30px; padding: 10px 20px; margin-bottom: 10px; color: #c62828; font-weight: bold; display: flex; align-items: center;">
-            🛡️ Strong Protection
-        </div>
-        <div style="background-color: white; border-radius: 30px; padding: 10px 20px; margin-bottom: 10px; color: #1565c0; font-weight: bold; display: flex; align-items: center;">
-            📈 Higher Yield
-        </div>
-        <div style="background-color: white; border-radius: 30px; padding: 10px 20px; margin-bottom: 10px; color: #2e7d32; font-weight: bold; display: flex; align-items: center;">
-            🌍 Sustainable Future
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("<h3 style='color: white; text-shadow: 1px 1px 4px black;'>📸 Scan Your Maize Crop</h3>", unsafe_allow_html=True)
-        uploaded = st.file_uploader("Upload an image", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
+    st.caption("⚠️ Note: This AI is trained for maize leaves. Photos of people or objects will be rejected.")
+    
+    if uploaded:
+        col1, col2 = st.columns([1, 2])
+        image = Image.open(uploaded).convert('RGB')
         
-        if uploaded:
-            image = Image.open(uploaded).convert('RGB')
+        with col1:
+            st.image(image, caption="Uploaded Image", use_column_width=True)
             
+        with col2:
             if not is_it_a_leaf(image):
-                st.error("❌ **Invalid Image Detected.** Please upload a clear photo of a maize leaf.")
+                st.error("❌ **Invalid Image Detected.**")
+                st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
             else:
-                model = load_model()
-                if model:
+                try:
+                    model = load_model()
                     with st.spinner("Analyzing crop..."):
                         img = image.resize((128, 128))
                         img_array = np.array(img) / 255.0
@@ -148,8 +160,12 @@ with tab1:
                         result = class_names[idx]
                         display = display_names[result]
                         
-                        st.success(f"**Diagnosis: {display}**")
-                        st.info(f"Confidence: {confidence:.1f}%")
+                        if 'healthy' in result:
+                            st.success(f"### ✅ Diagnosis: {display}")
+                        else:
+                            st.warning(f"### ⚠️ Diagnosis: {display}")
+                            
+                        st.info(f"**Confidence:** {confidence:.1f}%")
                         
                         treatment_info = {
                             'healthy': {'chemical': 'No treatment needed', 'organic': 'Continue good practices'},
@@ -160,46 +176,33 @@ with tab1:
                         key = result.replace('maize_', '')
                         info = treatment_info.get(key, treatment_info['healthy'])
                         
-                        st.markdown("**💊 Treatment:**")
-                        st.write(f"- Chemical: {info['chemical']}")
-                        st.write(f"- Organic: {info['organic']}")
-                else:
-                    st.error("Model not found. Please ensure agriwise_model.h5 is uploaded.")
+                        st.subheader("💊 Treatment Recommendations")
+                        t1, t2 = st.columns(2)
+                        t1.info(f"**🧪 Chemical:**\n\n{info['chemical']}")
+                        t2.success(f"**🌿 Organic:**\n\n{info['organic']}")
+                except Exception as e:
+                    st.error(f"Error analyzing image: {str(e)}")
 
 with tab2:
-    # --- WEATHER BACKGROUND VIDEO ---
-    video_file = "weather_bg.mp4"
-    if os.path.exists(video_file):
-        with open(video_file, "rb") as video:
-            video_bytes = video.read()
-        st.video(video_bytes, muted=True, autoplay=True, loop=True)
-    # --------------------------------
+    st.header("Local Weather & Climate Advisory")
     
-    st.markdown("<h3 style='color: white; text-shadow: 1px 1px 4px black;'>⛅ Localized Climate Advisory</h3>", unsafe_allow_html=True)
-    district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
+    col_w1, col_w2 = st.columns(2)
+    with col_w1:
+        district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
     
     weather_alerts = {
-        "Mzuzu": ("No active weather alerts for your area.", "success"),
+        "Mzuzu": ("No active alerts", "success"),
         "Mzimba": ("🌵 DRY SPELL ALERT: Irrigate if possible", "warning"),
         "Karonga": ("🚨 FLOOD ALERT: Heavy rains expected", "error"),
-        "Rumphi": ("No active weather alerts for your area.", "success"),
+        "Rumphi": ("No active alerts", "success"),
         "Nkhata Bay": ("🚨 FLOOD ALERT: Heavy rains expected", "error")
     }
-    msg, alert_type = weather_alerts.get(district, ("No active weather alerts for your area.", "success"))
     
-    col_w1, col_w2, col_w3 = st.columns(3)
-    col_w1.metric("🌡️ Temperature", "24°C")
-    col_w2.metric("🌧️ Rainfall", "Moderate")
-    col_w3.metric("🗓️ Season", "Rainy / Growing")
+    msg, alert_type = weather_alerts.get(district, ("No active alerts", "success"))
     
+    st.markdown("---")
     if alert_type == "error": st.error(msg)
     elif alert_type == "warning": st.warning(msg)
     else: st.success(msg)
     
-    st.markdown("""
-    <div style="background-color: rgba(30,30,30,0.7); padding: 15px; border-radius: 10px; color: white;">
-        <b>🗓️ Planting Calendar:</b><br>
-        • 🌽 Maize: Plant in November - December<br>
-        • 🌾 Harvest: April - June
-    </div>
-    """, unsafe_allow_html=True)
+    st.info("📅 **Farming Calendar:** Maize planting is best between November and December. Harvest begins in April to June.")
