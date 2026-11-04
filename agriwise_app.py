@@ -11,7 +11,12 @@ st.set_page_config(page_title="AgriWise | Crop Health AI", page_icon="🌽", lay
 # ==================== CUSTOM CSS ====================
 st.markdown("""
 <style>
-    /* Main background and text */
+    /* Force text colors to be readable */
+    .stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp li, .stApp span {
+        color: #1B5E20 !important;
+    }
+    
+    /* Main background */
     .stApp {
         background-color: #f4f9f4;
     }
@@ -21,20 +26,13 @@ st.markdown("""
         background: linear-gradient(135deg, #1B5E20 0%, #4CAF50 100%);
         padding: 2rem;
         border-radius: 15px;
-        color: white;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         margin-bottom: 2rem;
     }
-    .main-header h1 {
-        font-size: 3rem;
+    .main-header h1, .main-header p {
+        color: white !important;
         margin: 0;
-        font-weight: 800;
-    }
-    .main-header p {
-        font-size: 1.2rem;
-        margin-top: 0.5rem;
-        opacity: 0.9;
     }
     
     /* Result Cards */
@@ -47,23 +45,20 @@ st.markdown("""
     .result-healthy {
         background-color: #E8F5E9;
         border-left: 6px solid #2E7D32;
-        color: #1B5E20;
     }
     .result-disease {
         background-color: #FFF3E0;
         border-left: 6px solid #EF6C00;
-        color: #E65100;
     }
     .result-error {
         background-color: #FFEBEE;
         border-left: 6px solid #C62828;
-        color: #B71C1C;
     }
     
     /* Treatment Boxes */
     .treatment-box {
         background: white;
-        padding: 1rem;
+        padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         border: 1px solid #E0E0E0;
@@ -73,7 +68,6 @@ st.markdown("""
     /* Footer */
     .footer {
         text-align: center;
-        color: #555;
         padding: 2rem 0;
         font-size: 0.9rem;
         border-top: 1px solid #DDD;
@@ -106,9 +100,10 @@ def load_model():
 
 # ==================== SIDEBAR ====================
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2488/2488658.png", width=100) # Corn icon
+    # Using a real Maize field image instead of a computer icon
+    st.image("https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=300&q=80", use_column_width=True)
     st.markdown("### 🌾 Welcome to AgriWise")
-    st.info("Empowering Malawian smallholder farmers with instant AI crop diagnosis and climate alerts.")
+    st.info("Empowering farmers with instant AI crop diagnosis and climate alerts.")
     
     st.markdown("---")
     st.markdown("### 🔍 Detection Classes")
@@ -169,16 +164,14 @@ with tab1:
                     result = class_names[idx]
                     display = display_names[result]
                     
-                    # If confidence is very low, it might be a bad image
                     if confidence < 60:
                         st.markdown(f"""
                         <div class="result-card result-error">
                             <h3>❌ Unrecognized Image</h3>
-                            <p>The AI could not confidently identify a maize leaf here. Please ensure you uploaded a clear photo of a maize leaf.</p>
+                            <p>The AI could not confidently identify a maize leaf here. Please ensure you uploaded a clear photo.</p>
                         </div>
                         """, unsafe_allow_html=True)
                     else:
-                        # Show Result Card
                         if 'healthy' in result:
                             st.markdown(f"""
                             <div class="result-card result-healthy">
@@ -196,7 +189,6 @@ with tab1:
                             </div>
                             """, unsafe_allow_html=True)
                         
-                        # Treatment Columns with Icons
                         treatment_info = {
                             'healthy': {'chemical': 'No chemicals needed.', 'organic': 'Maintain current practices.'},
                             'common_rust': {'chemical': 'Azoxystrobin fungicide (K8,000/ha)', 'organic': 'Neem oil spray (2 tsp/L)'},
@@ -246,7 +238,6 @@ with tab2:
     if selected:
         data = districts[selected]
         
-        # Weather Metrics Cards
         m1, m2, m3 = st.columns(3)
         with m1:
             st.metric(label="🌡️ Temperature", value=data["temp"])
@@ -257,7 +248,6 @@ with tab2:
             
         st.markdown("---")
         
-        # Alerts Section
         st.markdown("### ⚠️ Active Alerts")
         if data["alert"] == "flood":
             st.error("🚨 **FLOOD ALERT:** Heavy rains expected in the next 48 hours. Move livestock to higher ground and ensure drainage channels are clear.")
@@ -266,7 +256,6 @@ with tab2:
         else:
             st.success("✅ **No active weather alerts** for your area.")
             
-        # Planting Calendar
         st.markdown("### 📅 Planting Calendar")
         st.info("""
         * **🌽 Maize:** Plant in November - December
