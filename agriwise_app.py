@@ -30,36 +30,39 @@ with tab1:
     st.header("Upload a photo of your maize leaf")
     uploaded = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
     
+    st.caption("⚠️ For accurate results, please upload a clear, close-up photo of a maize leaf.")
+    
     if uploaded:
         image = Image.open(uploaded).convert('RGB')
         st.image(image, caption="Uploaded Image", width=300)
         
-        # THE SOLUTION: Ask the user to confirm before analyzing
-        st.warning("⚠️ **Verification Required:** To prevent false diagnoses, please confirm this image is a maize leaf.")
-        user_confirmed = st.checkbox("I confirm this is a clear photo of a maize leaf.")
-        
-        if user_confirmed:
-            try:
-                model = load_model()
-                with st.spinner("Analyzing crop..."):
-                    img = image.resize((128, 128))
-                    img_array = np.array(img) / 255.0
-                    img_array = np.expand_dims(img_array, axis=0)
-                    
-                    predictions = model.predict(img_array)
-                    idx = np.argmax(predictions[0])
-                    confidence = predictions[0][idx] * 100
-                    
-                    class_names = ['maize_cercospora_leaf_spot', 'maize_common_rust', 'maize_healthy', 'maize_northern_leaf_blight']
-                    display_names = {
-                        'maize_cercospora_leaf_spot': 'Maize Cercospora Leaf Spot',
-                        'maize_common_rust': 'Maize Common Rust',
-                        'maize_healthy': 'Healthy Maize',
-                        'maize_northern_leaf_blight': 'Maize Northern Leaf Blight'
-                    }
-                    result = class_names[idx]
-                    display = display_names[result]
-                    
+        try:
+            model = load_model()
+            with st.spinner("Analyzing crop..."):
+                img = image.resize((128, 128))
+                img_array = np.array(img) / 255.0
+                img_array = np.expand_dims(img_array, axis=0)
+                
+                predictions = model.predict(img_array)
+                idx = np.argmax(predictions[0])
+                confidence = predictions[0][idx] * 100
+                
+                class_names = ['maize_cercospora_leaf_spot', 'maize_common_rust', 'maize_healthy', 'maize_northern_leaf_blight']
+                display_names = {
+                    'maize_cercospora_leaf_spot': 'Maize Cercospora Leaf Spot',
+                    'maize_common_rust': 'Maize Common Rust',
+                    'maize_healthy': 'Healthy Maize',
+                    'maize_northern_leaf_blight': 'Maize Northern Leaf Blight'
+                }
+                result = class_names[idx]
+                display = display_names[result]
+                
+                # THE SMART CONFIDENCE CHECK
+                # If the AI is less than 85% sure, it's likely a person, object, or blurry photo.
+                if confidence < 85.0:
+                    st.error("❌ **Unrecognized Image.**")
+                    st.info("The AI could not confidently identify a maize leaf here. This might be a photo of a person, an object, or a blurry leaf. Please try again with a clear maize leaf.")
+                else:
                     if 'healthy' in result:
                         st.success(f"### ✅ Diagnosis: {display}")
                     else:
@@ -79,10 +82,8 @@ with tab1:
                     col1, col2 = st.columns(2)
                     col1.write(f"**Chemical:** {info['chemical']}")
                     col2.write(f"**Organic:** {info['organic']}")
-            except Exception as e:
-                st.error(f"Error analyzing image: {str(e)}")
-        else:
-            st.info("Please check the box above to start the analysis.")
+        except Exception as e:
+            st.error(f"Error analyzing image: {str(e)}")
 
 with tab2:
     st.header("Weather Advisory")
