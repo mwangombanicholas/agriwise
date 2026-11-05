@@ -6,8 +6,7 @@ import requests
 import tensorflow as tf
 import base64
 
-# --- PAGE CONFIG (Must be first) ---
-st.set_page_config(page_title="AgriWise Login", page_icon="🌽", layout="wide")
+st.set_page_config(page_title="AgriWise", page_icon="🌽", layout="wide")
 
 MODEL_PATH = "agriwise_model.h5"
 MODEL_URL = "https://drive.google.com/uc?id=1S8KT_Qz6094H2uRwkNqGGHh13C1WnVWw&export=download"
@@ -25,69 +24,120 @@ def get_base64(file_path):
 bg_image_b64 = get_base64(bg_image_path)
 video_b64 = get_base64(video_path)
 
-# --- CUSTOM CSS (Applied to both Login and Dashboard) ---
+# --- CUSTOM CSS (Landing Page & Dashboard) ---
 st.markdown(f"""
 <style>
-    /* Main App Background */
+    /* --- MAIN BACKGROUND --- */
     .stApp {{
-        background-image: url("data:image/jpeg;base64,{bg_image_b64}");
+        background-color: #ffffff;
+    }}
+    
+    /* --- LANDING PAGE HERO SECTION --- */
+    .hero-section {{
+        background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("data:image/jpeg;base64,{bg_image_b64}");
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        margin-top: -2rem; /* Pull up to cover the top */
+        margin-bottom: 2rem;
     }}
     
-    /* Transparent main container */
-    .block-container {{
-        background: transparent !important;
-        padding-top: 2rem !important;
-    }}
-    
-    /* The big white headline */
-    .hero-title {{
-        color: white !important;
-        font-size: 3.5rem !important;
-        font-weight: 800 !important;
-        line-height: 1.2;
+    .hero-section h1 {{
+        font-size: 5rem;
+        font-weight: 900;
+        letter-spacing: 5px;
+        margin-bottom: 0;
+        text-transform: uppercase;
         text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+    }}
+    
+    .hero-section p {{
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
         margin-bottom: 2rem;
     }}
 
-    /* The 4 feature badges */
-    .feature-badge {{
-        background-color: white;
-        border-radius: 30px;
-        padding: 12px 25px;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        width: 100%;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        font-weight: bold;
-        color: #2e7d32 !important;
+    /* --- LANDING PAGE TEXT SECTIONS --- */
+    .text-section {{
+        padding: 3rem;
+        background-color: #1a1a1a;
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 3rem;
+    }}
+    .text-section h2 {{
+        color: #8bc34a !important;
+        font-size: 2.5rem;
+    }}
+    .text-section p {{
+        color: #cccccc !important;
         font-size: 1.1rem;
     }}
-    
-    .feature-badge span {{
-        margin-right: 15px;
-        font-size: 1.3rem;
-    }}
 
-    /* The white cards */
-    .white-card {{
-        background-color: rgba(255, 255, 255, 0.95);
+    /* --- LOGIN CARD --- */
+    .login-card {{
+        background: white;
         padding: 2rem;
         border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        position: relative;
-        z-index: 10;
-    }}
-
-    /* Fix ALL text inside the white cards */
-    .white-card h1, .white-card h2, .white-card h3, .white-card p, .white-card span, .white-card label, .white-card div, .white-card strong {{
-        color: #1b5e20 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border-top: 5px solid #8bc34a;
     }}
     
-    /* File Uploader Styling */
+    .login-card h3 {{
+        color: #1b5e20 !important;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }}
+
+    /* --- DASHBOARD STYLES --- */
+    .dashboard-hero {{
+        background-image: url("data:image/jpeg;base64,{bg_image_b64}");
+        background-size: cover;
+        background-position: center;
+        padding: 3rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }}
+
+    .dashboard-hero h1 {{
+        color: white !important;
+        font-weight: 800;
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+    }}
+
+    .feature-badge {{
+        background-color: #e8f5e9;
+        border-left: 5px solid #2e7d32;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        color: #1b5e20 !important;
+    }}
+
+    .white-card {{
+        background-color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid #eee;
+    }}
+
+    .white-card h2, .white-card p, .white-card label, .white-card div, .white-card span {{
+        color: #333 !important;
+    }}
+    
+    /* File Uploader */
     [data-testid="stFileUploader"] {{
         background-color: #f8f9fa;
         padding: 1rem;
@@ -95,19 +145,11 @@ st.markdown(f"""
         border: 2px dashed #2e7d32;
     }}
 
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {{
-        background-color: #ffffff !important;
-    }}
-    [data-testid="stSidebar"] * {{
-        color: #1b5e20 !important;
-    }}
-
-    /* Tab 2 Video Wrapper */
+    /* Tab 2 Video */
     .video-container {{
         position: relative;
         width: 100%;
-        min-height: 600px;
+        min-height: 500px;
         border-radius: 15px;
         overflow: hidden;
     }}
@@ -122,15 +164,18 @@ st.markdown(f"""
         opacity: 0.8;
     }}
     
-    /* Style the Login Button to be Green */
+    /* Buttons */
     .stButton>button {{
         background-color: #2e7d32 !important;
         color: white !important;
-        font-size: 1.2rem !important;
         font-weight: bold !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         border: none !important;
-        padding: 0.8rem 2rem !important;
+        padding: 0.5rem 1rem !important;
+        transition: 0.3s;
+    }}
+    .stButton>button:hover {{
+        background-color: #1b5e20 !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -152,21 +197,17 @@ def is_it_a_leaf(image):
     img_hsv = np.array(img.convert('HSV'))
     hue = img_hsv[:, :, 0]
     sat = img_hsv[:, :, 1] 
-    
     plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
     total_pixels = 128 * 128
     color_score = (plant_pixels / total_pixels) * 100
     if color_score < 25: return False
-        
     gray = np.mean(img_rgb, axis=2)
     edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
     texture_score = edges / total_pixels
     if texture_score < 10: return False
     return True
 
-# ==========================================
-# SESSION STATE FOR LOGIN
-# ==========================================
+# --- SESSION STATE ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'farmer_name' not in st.session_state:
@@ -175,69 +216,94 @@ if 'farmer_district' not in st.session_state:
     st.session_state['farmer_district'] = "Mzuzu"
 
 # ==========================================
-# PAGE 1: THE LANDING / LOGIN PAGE
+# PAGE 1: THE LANDING PAGE
 # ==========================================
 if not st.session_state['logged_in']:
-    st.markdown('<div class="hero-title">Welcome to AgriWise.</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([1, 1])
+    # 1. Hero Section
+    st.markdown("""
+    <div class="hero-section">
+        <p>Grow Naturally, Live Natural</p>
+        <h1>FARMING</h1>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 2. Dark Text Section (Like the middle of your image)
+    st.markdown("""
+    <div class="text-section">
+        <h2>Empowering Malawian Farmers with AI</h2>
+        <p>We combine cutting-edge Artificial Intelligence with agricultural expertise to help smallholder farmers protect their crops, increase yields, and build climate resilience.</p>
+        <p>Our mission is to ensure that no farmer loses their harvest due to late disease detection or unpredictable weather patterns.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. Login and Info Section
+    col1, col2 = st.columns([1.5, 1])
     
     with col1:
         st.markdown("""
-        <div class="white-card" style="margin-top: 20px;">
-            <h3>Empowering Malawian Farmers</h3>
-            <p>Join thousands of farmers using AI to detect crop diseases instantly and receive climate-smart advice.</p>
-            <ul style="color: #1b5e20; font-weight: bold;">
-                <li>96% Accurate AI Diagnosis</li>
-                <li>Localized Weather Alerts</li>
-                <li>Free for Smallholder Farmers</li>
-            </ul>
+        <div class="white-card" style="height: 100%;">
+            <h2 style="color: #1b5e20 !important;">Why Choose AgriWise?</h2>
+            <br>
+            <h4 style="color: #2e7d32 !important;">🌱 96% Accuracy</h4>
+            <p>Our CNN model was trained on thousands of images to accurately detect Common Rust, Northern Leaf Blight, and Cercospora.</p>
+            
+            <h4 style="color: #2e7d32 !important;">⛅ Localized Climate Advisory</h4>
+            <p>Get real-time weather alerts and planting calendars specific to your district in Malawi.</p>
+            
+            <h4 style="color: #2e7d32 !important;">🤝 Designed for Smallholders</h4>
+            <p>Simple, easy-to-use, and accessible on any basic smartphone.</p>
         </div>
         """, unsafe_allow_html=True)
         
     with col2:
         st.markdown("""
-        <div class="white-card">
-            <h2 style="margin-top:0;">🌾 Farmer Login</h2>
-            <p>Please enter your details to access your dashboard.</p>
+        <div class="login-card">
+            <h3>🌾 Farmer Login</h3>
+            <p style="text-align: center; color: #666 !important; font-size: 0.9rem;">Enter your details to access the dashboard</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Input fields
         name = st.text_input("Full Name", placeholder="e.g., John Phiri")
         district = st.selectbox("Home District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
         
-        if st.button("Enter Dashboard"):
+        if st.button("Enter Dashboard", use_container_width=True):
             if name:
                 st.session_state['logged_in'] = True
                 st.session_state['farmer_name'] = name
                 st.session_state['farmer_district'] = district
-                st.rerun() # Refresh the app to show the dashboard
+                st.rerun()
             else:
-                st.error("Please enter your name to continue.")
+                st.error("Please enter your name.")
 
 # ==========================================
-# PAGE 2: THE MAIN DASHBOARD (If logged in)
+# PAGE 2: THE DASHBOARD
 # ==========================================
 else:
-    # --- SIDEBAR ---
+    # Sidebar
     with st.sidebar:
         st.markdown("<h1 style='text-align: center;'>🌽</h1>", unsafe_allow_html=True)
         st.markdown(f"### Welcome, **{st.session_state['farmer_name']}**!")
         st.markdown(f"📍 Location: **{st.session_state['farmer_district']}**")
         st.markdown("---")
         
-        if st.button("Log Out"):
+        if st.button("Log Out", use_container_width=True):
             st.session_state['logged_in'] = False
-            st.session_state['farmer_name'] = ""
             st.rerun()
             
         st.markdown("---")
+        st.markdown("#### Supported Crop:")
+        st.markdown("🌽 Maize (Corn)")
         st.markdown("#### Detects:")
         st.markdown("- Healthy Maize\n- Common Rust\n- Cercospora Leaf Spot\n- Northern Leaf Blight")
 
-    # --- MAIN UI LAYOUT ---
-    st.markdown(f'<div class="hero-title">Welcome back, {st.session_state["farmer_name"]}.<br>Ready to scan your crops?</div>', unsafe_allow_html=True)
+    # Main Dashboard Header
+    st.markdown(f"""
+    <div class="dashboard-hero">
+        <h1>Welcome back, {st.session_state['farmer_name']}.</h1>
+        <p style="font-size: 1.2rem;">Ready to scan your crops today?</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
 
@@ -247,15 +313,15 @@ else:
 
         with col_left:
             st.markdown("""
-            <div class="feature-badge"><span>🌱</span> Better Growth</div>
-            <div class="feature-badge"><span>🛡️</span> Strong Protection</div>
-            <div class="feature-badge"><span>📈</span> Higher Yield</div>
-            <div class="feature-badge"><span>🌍</span> Sustainable Future</div>
+            <div class="feature-badge">🌱 Better Growth</div>
+            <div class="feature-badge">🛡️ Strong Protection</div>
+            <div class="feature-badge">📈 Higher Yield</div>
+            <div class="feature-badge">🌍 Sustainable Future</div>
             """, unsafe_allow_html=True)
 
         with col_right:
             st.markdown("""
-            <div class="white-card">
+            <div class="white-card" style="margin-bottom: 1rem;">
                 <h2>📸 Scan Your Maize Crop</h2>
                 <p>Take a clear, close-up photo of a single maize leaf to get an instant AI diagnosis.</p>
             </div>
@@ -322,7 +388,7 @@ else:
             <video autoplay loop muted playsinline>
                 <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
             </video>
-            <div class="white-card" style="margin: 2rem;">
+            <div class="white-card" style="margin: 2rem; background: rgba(255, 255, 255, 0.95);">
                 <h2 style="margin-top:0;">⛅ Localized Climate Advisory</h2>
                 <p>Showing weather for your district: <strong>{st.session_state['farmer_district']}</strong></p>
             </div>
@@ -331,7 +397,6 @@ else:
         
         col_w1, col_w2 = st.columns(2)
         with col_w1:
-            # Defaults to the district they selected on login!
             default_index = ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"].index(st.session_state['farmer_district'])
             district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"], index=default_index)
         
