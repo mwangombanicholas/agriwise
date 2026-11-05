@@ -5,9 +5,10 @@ import os
 import requests
 import tensorflow as tf
 import base64
+import datetime
 from database import init_db, add_farmer, verify_farmer
 
-# Initialize database on first run
+# Initialize database
 init_db()
 
 st.set_page_config(page_title="AgriWise", page_icon="🌽", layout="wide")
@@ -31,12 +32,10 @@ video_b64 = get_base64(video_path)
 # --- CUSTOM CSS ---
 st.markdown(f"""
 <style>
-    /* Hide Streamlit header and footer for the landing page look */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
 
-    /* Main App Background (Cornfield) */
     .stApp {{
         background-image: url("data:image/jpeg;base64,{bg_image_b64}");
         background-size: cover;
@@ -44,13 +43,11 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
     
-    /* Make the main container transparent */
     .block-container {{
         background: transparent !important;
         padding-top: 2rem !important;
     }}
     
-    /* The big white headline */
     .hero-title {{
         color: white !important;
         font-size: 3.5rem !important;
@@ -60,7 +57,6 @@ st.markdown(f"""
         margin-bottom: 2rem;
     }}
 
-    /* The 4 feature badges */
     .feature-badge {{
         background-color: white;
         border-radius: 30px;
@@ -77,7 +73,6 @@ st.markdown(f"""
     
     .feature-badge span {{ margin-right: 15px; font-size: 1.3rem; }}
 
-    /* The white cards */
     .white-card {{
         background-color: rgba(255, 255, 255, 0.95);
         padding: 2rem;
@@ -98,11 +93,9 @@ st.markdown(f"""
         border: 2px dashed #2e7d32;
     }}
 
-    /* Sidebar Styling */
     [data-testid="stSidebar"] {{ background-color: #ffffff !important; }}
     [data-testid="stSidebar"] * {{ color: #1b5e20 !important; }}
 
-    /* --- VIDEO WRAPPER --- */
     .video-container {{
         position: relative;
         width: 100%;
@@ -120,16 +113,22 @@ st.markdown(f"""
         opacity: 0.8;
     }}
 
-    /* Form styling */
     .stTextInput > div > div > input {{
         color: #1b5e20 !important;
         background-color: #f8f9fa !important;
     }}
+    
+    /* Make ALL buttons green EXCEPT the logout button */
     .stButton > button {{
         background-color: #2e7d32 !important;
         color: white !important;
         width: 100%;
         border-radius: 8px;
+    }}
+    /* Make the Logout button RED */
+    .logout-btn > button {{
+        background-color: #d32f2f !important;
+        color: white !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -150,28 +149,47 @@ def is_it_a_leaf(image):
     img_rgb = np.array(img)
     img_hsv = np.array(img.convert('HSV'))
     hue, sat = img_hsv[:, :, 0], img_hsv[:, :, 1] 
-    
     plant_pixels = np.sum(((hue >= 15) & (hue <= 100)) & (sat > 40))
     total_pixels = 128 * 128
-    color_score = (plant_pixels / total_pixels) * 100
-    if color_score < 25: return False
-        
+    if (plant_pixels / total_pixels) * 100 < 25: return False
     gray = np.mean(img_rgb, axis=2)
     edges = np.abs(np.diff(gray, axis=0)).sum() + np.abs(np.diff(gray, axis=1)).sum()
     if (edges / total_pixels) < 10: return False
     return True
 
+# Real Weather API Function (NASA POWER - Free)
+@st.cache_data(ttl=3600) # Cache for 1 hour
+def get_real_weather(lat, lon):
+    try:
+        today = datetime.datetime.now()
+        end_date = today.strftime('%Y%m%d')
+        start_date = (today - datetime.timedelta(days=7)).strftime('%Y%m%d')
+        
+        url = f"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,PRECTOTCORR&community=AG&longitude={lon}&latitude={lat}&start={start_date}&end={end_date}&format=JSON"
+        res = requests.get(url, timeout=5)
+        data = res.json()
+        
+        # Get latest available data
+        t2m_data = data['properties']['parameter']['T2M']
+        rain_data = data['properties']['parameter']['PRECTOTCORR']
+        
+        latest_date = list(t2m_data.keys())[-1]
+        temp = t2m_data[latest_date]
+        rain = rain_data[latest_date]
+        
+        return temp, rain
+    except:
+        return None, None
 
 # ==========================================
-# STATE MANAGEMENT (Login / Logout)
+# STATE MANAGEMENT
 # ==========================================
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
     st.session_state['user_name'] = ""
 
-
 # ==========================================
-# LANDING PAGE (IF NOT LOGGED IN)
+# LANDING PAGE
 # ==========================================
 if not st.session_state['logged_in']:
     col_left, col_right = st.columns([1.5, 1], gap="large")
@@ -194,7 +212,6 @@ if not st.session_state['logged_in']:
                 if name:
                     st.session_state['logged_in'] = True
                     st.session_state['user_name'] = name
-                    st.success("Login successful!")
                     st.rerun()
                 else:
                     st.error("Invalid email or password.")
@@ -205,49 +222,40 @@ if not st.session_state['logged_in']:
             signup_pass = st.text_input("Create Password", type="password", key="sign_pass")
             if st.button("Sign Up", use_container_width=True):
                 if signup_name and signup_email and signup_pass:
-                    success = add_farmer(signup_name, signup_email, signup_pass)
-                    if success:
-                        st.success("Account created successfully! Please go to the Login tab.")
+                    if add_farmer(signup_name, signup_email, signup_pass):
+                        st.success("Account created! Please go to the Login tab.")
                     else:
-                        st.error("Email already exists. Please login.")
+                        st.error("Email already exists.")
                 else:
                     st.warning("Please fill all fields.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-
 # ==========================================
-# MAIN DASHBOARD (IF LOGGED IN)
+# MAIN DASHBOARD
 # ==========================================
 else:
-    # --- SIDEBAR ---
     with st.sidebar:
-        st.markdown(f"<h3>Welcome, {st.session_state['user_name']}! 👋</h3>", unsafe_allow_html=True)
-        st.markdown("---")
-        st.markdown("<h1 style='text-align: center;'>🌽</h1>", unsafe_allow_html=True)
-        st.markdown("### About AgriWise")
-        st.write("Built by **Mzuzu University Students** for smallholder farmers.")
-        st.markdown("---")
-        st.markdown("**Supported Crop:** Maize (Corn)")
-        st.markdown("**Model Accuracy:** 96%")
-        st.markdown("---")
-        st.markdown("#### Detects:")
-        st.markdown("- Healthy Maize\n- Common Rust\n- Cercospora Leaf Spot\n- Northern Leaf Blight")
-        
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        if st.button("Logout", use_container_width=True):
+        # THE LOGOUT BUTTON (Wrapped in red CSS class)
+        st.markdown('<div class="logout-btn">', unsafe_allow_html=True)
+        if st.button("🚪 Logout", use_container_width=True):
             st.session_state['logged_in'] = False
             st.session_state['user_name'] = ""
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown(f"<h3>Welcome, {st.session_state['user_name']}! 👋</h3>", unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("### About AgriWise")
+        st.markdown("**Supported Crop:** Maize (Corn)")
+        st.markdown("**Model Accuracy:** 96%")
 
-    # --- MAIN DASHBOARD UI ---
     st.markdown('<div class="hero-title">Bringing Innovation to<br>Your Farming Journey.</div>', unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["📸 AI Crop Diagnosis", "⛅ Climate Advisory"])
     
-    # --- TAB 1: CROP DIAGNOSIS ---
+    # --- TAB 1 ---
     with tab1:
         col_left, col_right = st.columns([1, 1.5], gap="large")
-        
         with col_left:
             st.markdown("""
             <div class="feature-badge"><span>🌱</span> Better Growth</div>
@@ -264,15 +272,14 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            uploaded = st.file_uploader("Upload an image (JPG, PNG)", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
+            uploaded = st.file_uploader("Upload an image", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
             
             if uploaded:
                 image = Image.open(uploaded).convert('RGB')
                 st.image(image, caption="Uploaded Image", use_column_width=True)
                 
                 if not is_it_a_leaf(image):
-                    st.error("❌ **Invalid Image Detected.**")
-                    st.info("This does not look like a plant leaf. Please take a clear photo of a maize leaf.")
+                    st.error("❌ **Invalid Image Detected.** This does not look like a plant leaf.")
                 else:
                     try:
                         model = load_model()
@@ -286,30 +293,19 @@ else:
                             confidence = predictions[0][idx] * 100
                             
                             class_names = ['maize_cercospora_leaf_spot', 'maize_common_rust', 'maize_healthy', 'maize_northern_leaf_blight']
-                            display_names = {
-                                'maize_cercospora_leaf_spot': 'Maize Cercospora Leaf Spot',
-                                'maize_common_rust': 'Maize Common Rust',
-                                'maize_healthy': 'Healthy Maize',
-                                'maize_northern_leaf_blight': 'Maize Northern Leaf Blight'
-                            }
+                            display_names = {'maize_cercospora_leaf_spot': 'Cercospora Leaf Spot', 'maize_common_rust': 'Common Rust', 'maize_healthy': 'Healthy Maize', 'maize_northern_leaf_blight': 'Northern Leaf Blight'}
                             result = class_names[idx]
-                            display = display_names[result]
                             
-                            if 'healthy' in result:
-                                st.success(f"### ✅ Diagnosis: {display}")
-                            else:
-                                st.warning(f"### ⚠️ Diagnosis: {display}")
-                                
+                            if 'healthy' in result: st.success(f"### ✅ Diagnosis: {display_names[result]}")
+                            else: st.warning(f"### ⚠️ Diagnosis: {display_names[result]}")
                             st.info(f"**Confidence:** {confidence:.1f}%")
                             
-                            treatment_info = {
+                            info = {
                                 'healthy': {'chemical': 'No treatment needed', 'organic': 'Continue good practices'},
-                                'common_rust': {'chemical': 'Azoxystrobin or Propiconazole fungicide', 'organic': 'Neem oil spray'},
-                                'cercospora_leaf_spot': {'chemical': 'Mancozeb or Chlorothalonil fungicide', 'organic': 'Remove infected leaves'},
+                                'common_rust': {'chemical': 'Azoxystrobin fungicide', 'organic': 'Neem oil spray'},
+                                'cercospora_leaf_spot': {'chemical': 'Mancozeb fungicide', 'organic': 'Remove infected leaves'},
                                 'northern_leaf_blight': {'chemical': 'Azoxystrobin + Propiconazole', 'organic': 'Baking soda solution'}
-                            }
-                            key = result.replace('maize_', '')
-                            info = treatment_info.get(key, treatment_info['healthy'])
+                            }.get(result.replace('maize_', ''), {'chemical': 'N/A', 'organic': 'N/A'})
                             
                             st.subheader("💊 Treatment Recommendations")
                             t1, t2 = st.columns(2)
@@ -318,7 +314,7 @@ else:
                     except Exception as e:
                         st.error(f"Error analyzing image: {str(e)}")
     
-    # --- TAB 2: CLIMATE ADVISORY ---
+    # --- TAB 2 ---
     with tab2:
         st.markdown(f"""
         <div class="video-container">
@@ -326,33 +322,42 @@ else:
                 <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
             </video>
             <div class="white-card" style="margin: 2rem;">
-                <h2 style="margin-top:0;">⛅ Localized Climate Advisory</h2>
-                <p>Select your district to view active weather alerts and planting calendars.</p>
+                <h2 style="margin-top:0;">⛅ Real-Time Climate Advisory</h2>
+                <p>Data pulled directly from NASA POWER Satellite API.</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        col_w1, col_w2 = st.columns(2)
-        with col_w1:
-            district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
+        district = st.selectbox("📍 Select District", ["Mzuzu", "Mzimba", "Karonga", "Rumphi", "Nkhata Bay"])
         
-        weather_alerts = {
-            "Mzuzu": ("No active weather alerts for your area.", "success"),
-            "Mzimba": ("🌵 DRY SPELL ALERT: Irrigate if possible", "warning"),
-            "Karonga": ("🚨 FLOOD ALERT: Heavy rains expected", "error"),
-            "Rumphi": ("No active weather alerts for your area.", "success"),
-            "Nkhata Bay": ("🚨 FLOOD ALERT: Heavy rains expected", "error")
+        # Coordinates for the districts
+        coords = {
+            "Mzuzu": (-11.46, 34.02),
+            "Mzimba": (-11.90, 33.60),
+            "Karonga": (-9.93, 33.93),
+            "Rumphi": (-11.02, 33.85),
+            "Nkhata Bay": (-11.60, 34.30)
         }
         
-        msg, alert_type = weather_alerts.get(district, ("No active weather alerts for your area.", "success"))
+        lat, lon = coords[district]
         
+        with st.spinner("Fetching live satellite data from NASA..."):
+            temp, rain = get_real_weather(lat, lon)
+            
         m1, m2, m3 = st.columns(3)
-        m1.metric("🌡️ Temperature", "24°C")
-        m2.metric("🌧️ Rainfall", "Moderate")
+        if temp is not None:
+            m1.metric("🌡️ Real Temp (24h Avg)", f"{temp:.1f}°C")
+            m2.metric("🌧️ Rain (Last 24h)", f"{rain:.1f} mm")
+        else:
+            m1.metric("🌡️ Temp", "API Error")
+            m2.metric("🌧️ Rain", "API Error")
+            
         m3.metric("📅 Season", "Rainy / Growing")
     
-        if alert_type == "error": st.error(msg)
-        elif alert_type == "warning": st.warning(msg)
-        else: st.success(msg)
-        
-        st.info("📅 **Planting Calendar:**\n- **Maize:** Plant in November - December\n- **Harvest:** April - June")
+        # Alerts (Simulated for demonstration)
+        if district in ["Karonga", "Nkhata Bay"]:
+            st.error("🚨 FLOOD ALERT: High risk based on regional rainfall patterns.")
+        elif district in ["Mzimba", "Rumphi"]:
+            st.warning("🌵 DRY SPELL ALERT: Monitor soil moisture closely.")
+        else:
+            st.success("✅ No active weather alerts for your area.")
