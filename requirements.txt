@@ -3,3 +3,5 @@ numpy
 pillow
 tensorflow
 requests
+sqlalchemy
+bcrypt
