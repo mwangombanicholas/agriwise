@@ -1,9 +1,8 @@
 """
 =============================================================================
-AGRIWISE MALAWI (MLIMI WANZERU) - ENTERPRISE AGRO-INTELLIGENCE SYSTEM
+AGRIWISE MALAWI - DUAL ENTERPRISE AGRO-INTELLIGENCE SYSTEM
 Republic of Malawi · Ministry of Agriculture & Extension Services
-Supports: Multi-Role Access (Farmer & Extension Officer), AI Foliar Diagnosis,
-Geospatial Disease Surveillance, AIP Calculator, and Rural USSD/SMS Gateway.
+Separate Portals: Smallholder Farmer Portal & Ministry Officer Surveillance
 =============================================================================
 """
 
@@ -21,14 +20,14 @@ import streamlit as st
 from PIL import Image
 
 # ---------------------------------------------------------------------------
-# 1. DATABASE ARCHITECTURE (PERSISTENT SQLite WITH OUTBREAK TELEMETRY)
+# 1. DATABASE ARCHITECTURE (PERSISTENT SQLite WITH ROLE ISOLATION)
 # ---------------------------------------------------------------------------
 DB_PATH = "agriwise.db"
+OFFICER_SERVICE_PIN = "7111"  # Ministry of Agriculture Toll-Free & Clearance PIN
 
 def init_system_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    # Users & Personnel
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +39,6 @@ def init_system_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    # Epidemiological Scan Records
     c.execute("""
         CREATE TABLE IF NOT EXISTS scan_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +54,6 @@ def init_system_db():
     """)
     conn.commit()
 
-    # Pre-seed realistic Malawi baseline data if fresh install
     c.execute("SELECT COUNT(*) FROM scan_logs")
     if c.fetchone()[0] == 0:
         seed_data = [
@@ -129,7 +126,6 @@ def db_fetch_surveillance():
     conn.close()
     return df
 
-# Model handling with fallback
 try:
     import tensorflow as tf
     HAS_TF = True
@@ -138,7 +134,7 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# 2. APPLICATION CONFIGURATION & METADATA
+# 2. PAGE CONFIGURATION & DISTRICT METADATA
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="AgriWise Malawi | National Agro-Intelligence",
@@ -178,15 +174,12 @@ DISPLAY_NAMES_NY = {
 }
 
 MALAWI_DISTRICTS = {
-    # Northern Region
     "Mzuzu (Mzimba North)": {"lat": -11.46, "lon": 34.02, "region": "Northern", "zone": "Highland Viphya"},
     "Mzimba South": {"lat": -11.90, "lon": 33.60, "region": "Northern", "zone": "Plateau & Valleys"},
     "Karonga": {"lat": -9.93, "lon": 33.93, "region": "Northern", "zone": "Lakeshore Lowland"},
     "Rumphi": {"lat": -11.02, "lon": 33.85, "region": "Northern", "zone": "Mid-Altitude Highland"},
     "Nkhata Bay": {"lat": -11.60, "lon": 34.30, "region": "Northern", "zone": "High-Rainfall Lakeshore"},
     "Chitipa": {"lat": -9.70, "lon": 33.27, "region": "Northern", "zone": "Northern Hills"},
-
-    # Central Region
     "Lilongwe (Capital)": {"lat": -13.98, "lon": 33.78, "region": "Central", "zone": "Central Grain Plateau"},
     "Kasungu": {"lat": -13.03, "lon": 33.48, "region": "Central", "zone": "Tobacco & Maize Belt"},
     "Dedza": {"lat": -14.38, "lon": 34.33, "region": "Central", "zone": "Cool Highland Basin"},
@@ -194,8 +187,6 @@ MALAWI_DISTRICTS = {
     "Dowa": {"lat": -13.65, "lon": 33.93, "region": "Central", "zone": "Highland Fertile Plains"},
     "Mchinji": {"lat": -13.80, "lon": 32.88, "region": "Central", "zone": "Border Plateau"},
     "Ntcheu": {"lat": -14.82, "lon": 34.63, "region": "Central", "zone": "Kirk Range Escarpment"},
-
-    # Southern Region
     "Blantyre": {"lat": -15.78, "lon": 35.00, "region": "Southern", "zone": "Shire Highlands"},
     "Zomba": {"lat": -15.38, "lon": 35.33, "region": "Southern", "zone": "Zomba Plateau & Lake Chilwa"},
     "Mangochi": {"lat": -14.48, "lon": 35.26, "region": "Southern", "zone": "Lake Shore & Upper Shire"},
@@ -234,20 +225,10 @@ st.markdown(
         --mw-gold: #FFB81C;
         --mw-surface: #FFFFFF;
         --mw-border: #E2ECE5;
-        --mw-text-main: #11261B;
-        --mw-text-muted: #556B5F;
     }}
 
-    * {{
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }}
-
-    h1, h2, h3, h4 {{
-        font-family: 'Manrope', sans-serif !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.02em;
-    }}
-
+    * {{ font-family: 'Plus Jakarta Sans', sans-serif; }}
+    h1, h2, h3, h4 {{ font-family: 'Manrope', sans-serif !important; font-weight: 800 !important; }}
     #MainMenu, footer, header {{ visibility: hidden; }}
 
     .stApp {{
@@ -263,7 +244,6 @@ st.markdown(
         padding-bottom: 2.5rem;
     }}
 
-    /* Top National Header */
     .nat-ribbon {{
         display: inline-flex;
         align-items: center;
@@ -310,22 +290,9 @@ st.markdown(
         box-shadow: 0 8px 18px rgba(0, 122, 61, 0.35);
     }}
 
-    .brand-h1 {{
-        color: #FFFFFF;
-        font-size: 25px;
-        font-weight: 800;
-        margin: 0;
-        line-height: 1.1;
-    }}
+    .brand-h1 {{ color: #FFFFFF; font-size: 25px; font-weight: 800; margin: 0; line-height: 1.1; }}
+    .brand-caption {{ color: #A3C9B1; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }}
 
-    .brand-caption {{
-        color: #A3C9B1;
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-    }}
-
-    /* Cards & Containers */
     .glass-panel {{
         background: rgba(255, 255, 255, 0.98);
         border-radius: 18px;
@@ -335,18 +302,22 @@ st.markdown(
         margin-bottom: 16px;
     }}
 
+    .portal-switch-card {{
+        background: rgba(255, 255, 255, 0.08);
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        border-radius: 14px;
+        padding: 6px;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }}
+
     .feature-tile {{
         background: #FFFFFF;
         border: 1px solid #E5EFE8;
         border-radius: 14px;
         padding: 18px;
         box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }}
-
-    .feature-tile:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
     }}
 
     .exec-banner {{
@@ -388,11 +359,6 @@ st.markdown(
         border: 1px solid #E3ECE5;
         padding: 16px;
         border-radius: 12px;
-    }}
-
-    div[data-testid="stMetricValue"] {{
-        color: #0B2B1B !important;
-        font-weight: 800 !important;
     }}
 
     .app-footer {{
@@ -444,32 +410,19 @@ def load_production_model():
         return None
 
 def evaluate_maize_botanical_profile(image: Image.Image) -> tuple[bool, str, float]:
-    """
-    Production-grade multi-spectral heuristic:
-    Validates genuine maize foliage (chlorophyll, senescence, rust pustules)
-    and strictly rejects non-leaf images (faces, rooms, objects, blank screens).
-    """
     img_eval = image.resize((128, 128))
     hsv = np.asarray(img_eval.convert("HSV"))
     hue = hsv[:, :, 0]
     sat = hsv[:, :, 1]
     val = hsv[:, :, 2]
 
-    # Monocot Foliar Pigment Clusters:
-    # 1. Chlorophyll Active: Hue 26 to 95, Sat > 22, Val > 25
-    # 2. Chlorotic Senescence: Hue 18 to 26, Sat > 25, Val > 35
-    # 3. Necrotic Lesions / Rust Pustules: Hue 7 to 18, Sat > 35, Val > 30
     foliar_mask = (
         ((hue >= 26) & (hue <= 95) & (sat > 22) & (val > 25)) |
         ((hue >= 18) & (hue < 26) & (sat > 25) & (val > 35)) |
         ((hue >= 7) & (hue < 18) & (sat > 35) & (val > 30))
     )
     foliar_ratio = (np.sum(foliar_mask) / (128 * 128)) * 100.0
-
-    # Non-Plant Synthetic Interference (Blue skies, clothes, screens)
     synthetic_blue = (np.sum((hue >= 100) & (hue <= 145) & (sat > 45)) / (128 * 128)) * 100.0
-
-    # Structural Texture Gradient (Real leaves exhibit cell/vein variance)
     gray = np.asarray(img_eval.convert("L"))
     texture_var = float(np.var(gray))
 
@@ -488,7 +441,6 @@ def execute_ai_diagnostic(image: Image.Image) -> tuple[str, float, str]:
         conf = float(min(max(100.0 - foliar_pct, 88.0), 98.6))
         return "non_maize_leaf", conf, f"Validation Filter: {reason}"
 
-    # Deep Neural Inference
     model = load_production_model()
     if model is not None:
         try:
@@ -504,7 +456,6 @@ def execute_ai_diagnostic(image: Image.Image) -> tuple[str, float, str]:
         except Exception:
             pass
 
-    # Calibrated Agronomic Vision Fallback
     img = image.resize((128, 128))
     hsv = np.asarray(img.convert("HSV"))
     hue = hsv[:, :, 0]
@@ -662,7 +613,7 @@ AGRO_PROTOCOLS = {
 
 
 # ---------------------------------------------------------------------------
-# 7. STATE MANAGEMENT & TOP BRAND COMPONENT
+# 7. STATE MANAGEMENT & TOP BAR
 # ---------------------------------------------------------------------------
 if "auth_user" not in st.session_state:
     st.session_state.auth_user = None
@@ -672,6 +623,9 @@ if "lang" not in st.session_state:
 
 if "active_scan" not in st.session_state:
     st.session_state.active_scan = None
+
+if "active_portal" not in st.session_state:
+    st.session_state.active_portal = "Farmer"
 
 def render_top_navigation():
     col_brand, col_lang = st.columns([2.2, 1], vertical_alignment="center")
@@ -715,169 +669,283 @@ render_top_navigation()
 
 
 # ---------------------------------------------------------------------------
-# 8. AUTHENTICATION & ENTERPRISE ACCESS PORTAL
+# 8. TWO COMPLETELY SEPARATE AUTHENTICATION PORTALS
 # ---------------------------------------------------------------------------
 if st.session_state.auth_user is None:
 
-    col_hero, col_auth = st.columns([1.25, 0.88], gap="large")
+    # Top Portal Switcher (Like Student Portal vs Staff Portal)
+    c_p1, c_p2 = st.columns(2)
+    with c_p1:
+        if st.button("👨‍🌾 Smallholder Farmer Portal (Mlimi Wanzeru)", use_container_width=True,
+                     type="primary" if st.session_state.active_portal == "Farmer" else "secondary"):
+            st.session_state.active_portal = "Farmer"
+            st.rerun()
+    with c_p2:
+        if st.button("🏛️ Ministry Extension Officer Portal (AEDO Desk)", use_container_width=True,
+                     type="primary" if st.session_state.active_portal == "Officer" else "secondary"):
+            st.session_state.active_portal = "Officer"
+            st.rerun()
 
-    with col_hero:
-        if st.session_state.lang == "English":
-            st.markdown(
-                """
-                <h1 style="color:white; font-size:46px; line-height:1.12; margin-bottom:16px;">
-                    Intelligent Agro-Surveillance & Field Diagnostics for Malawi.
-                </h1>
-                <p style="color:#D5E8DC; font-size:16px; line-height:1.75; margin-bottom:24px;">
-                    A unified national platform engineered for smallholder farmers and Ministry of Agriculture
-                    Extension Officers (AEDOs). Enables high-accuracy foliar disease identification, real-time
-                    district outbreak tracking, and localized agronomic advisories.
-                </p>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                """
-                <h1 style="color:white; font-size:46px; line-height:1.12; margin-bottom:16px;">
-                    Dotolo wa Mbeu & Zanyengo Pogwiritsa Ntchito AI ku Malawi.
-                </h1>
-                <p style="color:#D5E8DC; font-size:16px; line-height:1.75; margin-bottom:24px;">
-                    Dongosolo la dziko lonse lothandiza alimi ang'onoang'ono ndi alangizi a zaulimi (AEDOs)
-                    kuzindikira matenda a chimanga mwachangu pafoni, ndi kuwunika madera omwe matenda afalikira.
-                </p>
-                """,
-                unsafe_allow_html=True
-            )
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-        f1, f2 = st.columns(2)
-        with f1:
-            st.markdown(
-                """
-                <div class="feature-tile">
-                    <div style="font-size:26px; margin-bottom:6px;">🔬</div>
-                    <div style="font-weight:800; color:#0A2C1A; font-size:15px;">Foliar Validation Engine</div>
-                    <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                        Computer vision pipeline filtering non-leaf samples and classifying 4 maize pathologies.
+    # =======================================================================
+    # PORTAL 1: FARMER DEDICATED LOGIN & REGISTRATION
+    # =======================================================================
+    if st.session_state.active_portal == "Farmer":
+
+        col_f_info, col_f_auth = st.columns([1.2, 0.9], gap="large")
+
+        with col_f_info:
+            if st.session_state.lang == "English":
+                st.markdown(
+                    """
+                    <div style="color:#A4DEB4; font-size:12px; font-weight:800; letter-spacing:1px; margin-bottom:8px;">
+                        FARMER ACCESS DESK
                     </div>
-                </div>
-                <div style="height:10px"></div>
-                <div class="feature-tile">
-                    <div style="font-size:26px; margin-bottom:6px;">🗺️</div>
-                    <div style="font-weight:800; color:#0A2C1A; font-size:15px;">Geospatial Outbreak Tracker</div>
-                    <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                        Live mapping of disease prevalence across 18+ Agricultural Development Divisions (ADDs).
+                    <h1 style="color:white; font-size:42px; line-height:1.15; margin-bottom:14px;">
+                        Smart Field Diagnostics for Malawian Farmers.
+                    </h1>
+                    <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
+                        Welcome to your personal farming assistant. Take photos of your maize leaves to detect
+                        diseases in seconds, get Ministry of Agriculture spray recommendations, calculate fertilizer
+                        needs, and monitor weather for your district.
+                    </p>
+                    """,
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    """
+                    <div style="color:#A4DEB4; font-size:12px; font-weight:800; letter-spacing:1px; margin-bottom:8px;">
+                        CHIKWANJA CHA ALIMI
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        with f2:
-            st.markdown(
-                """
-                <div class="feature-tile">
-                    <div style="font-size:26px; margin-bottom:6px;">⚖️</div>
-                    <div style="font-weight:800; color:#0A2C1A; font-size:15px;">AIP Input Calculator</div>
-                    <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                        Ministry-aligned Basal (NPK 23:10:5) and Urea calculations tailored for acreages.
+                    <h1 style="color:white; font-size:42px; line-height:1.15; margin-bottom:14px;">
+                        Thandizo la Ulimi Wamtsogolo kwa Alimi m'Malawi.
+                    </h1>
+                    <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
+                        Landirani uphungu waposachedwa: jambulani tsamba la chimanga kuzindikira matenda,
+                        werengerani feteleza wa AIP m'munda mwanu, ndi kuwona momwe nyengo ilili lero.
+                    </p>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            fa1, fa2 = st.columns(2)
+            with fa1:
+                st.markdown(
+                    """
+                    <div class="feature-tile">
+                        <div style="font-size:24px; margin-bottom:6px;">📸</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">Leaf Camera Doctor</div>
+                        <div style="color:#576C60; font-size:12.5px;">Detects Cercospora, Common Rust, Blight & rejects non-leaf images.</div>
                     </div>
-                </div>
-                <div style="height:10px"></div>
-                <div class="feature-tile">
-                    <div style="font-size:26px; margin-bottom:6px;">📱</div>
-                    <div style="font-weight:800; color:#0A2C1A; font-size:15px;">GSM USSD / SMS Gateway</div>
-                    <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                        *384*265# simulation delivering inclusive advisory to rural basic keypad devices.
+                    """,
+                    unsafe_allow_html=True
+                )
+            with fa2:
+                st.markdown(
+                    """
+                    <div class="feature-tile">
+                        <div style="font-size:24px; margin-bottom:6px;">⚖️</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">AIP Input Calculator</div>
+                        <div style="color:#576C60; font-size:12.5px;">Calculates exact 50kg bags of Basal NPK & Urea needed.</div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                    """,
+                    unsafe_allow_html=True
+                )
 
-    with col_auth:
-        st.markdown(
-            """
-            <div class="glass-panel">
-                <div style="color:#007A3D; font-weight:800; font-size:11.5px; letter-spacing:1px; margin-bottom:4px;">
-                    PORTAL ACCESS
-                </div>
-                <h3 style="color:#0F291B; margin:0 0 10px 0; font-size:24px;">Sign in to AgriWise</h3>
-                <p style="color:#607368; font-size:13px; margin-bottom:16px;">
-                    Access field diagnostic tools or the District Surveillance Console.
-                </p>
-            """,
-            unsafe_allow_html=True
-        )
+        with col_f_auth:
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div style="color:#007A3D; font-weight:800; font-size:11px; letter-spacing:1px;">
+                        FARMER SIGN IN
+                    </div>
+                    <h3 style="color:#0C2618; margin:2px 0 10px 0;">Sign in to your farm</h3>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-        tab_login, tab_signup, tab_demo = st.tabs(["Sign In", "Register Personnel", "🚀 Fast Demo Access"])
+                f_tab_in, f_tab_up, f_tab_demo = st.tabs(["Farmer Sign In", "New Farmer Registration", "🚀 Quick Demo"])
 
-        with tab_login:
-            with st.form("auth_login"):
-                l_email = st.text_input("Official Email / Phone", placeholder="e.g. officer@moa.gov.mw")
-                l_pass = st.text_input("Password", type="password")
-                btn_l = st.form_submit_button("Authenticate →", use_container_width=True)
+                with f_tab_in:
+                    with st.form("form_farmer_login"):
+                        f_email = st.text_input("Farmer Email or Mobile", placeholder="e.g. kondwani@gmail.com")
+                        f_pw = st.text_input("Password", type="password")
+                        btn_f_login = st.form_submit_button("Sign In to Farm Portal →", use_container_width=True)
 
-            if btn_l:
-                if not l_email or not l_pass:
-                    st.warning("Please provide valid authentication credentials.")
-                else:
-                    user_record = db_authenticate(l_email, l_pass)
-                    if user_record:
-                        st.session_state.auth_user = user_record
+                    if btn_f_login:
+                        if not f_email or not f_pw:
+                            st.warning("Please provide both email/phone and password.")
+                        else:
+                            user = db_authenticate(f_email, f_pw)
+                            if user:
+                                if user["role"] == "Officer":
+                                    st.info("ℹ️ You are registered as an Extension Officer. Directing to Officer Portal...")
+                                    st.session_state.active_portal = "Officer"
+                                    st.session_state.auth_user = user
+                                    st.rerun()
+                                else:
+                                    st.session_state.auth_user = user
+                                    st.rerun()
+                            else:
+                                st.error("Invalid credentials. Try quick demo or create account.")
+
+                with f_tab_up:
+                    with st.form("form_farmer_reg"):
+                        reg_name = st.text_input("Full Name", placeholder="e.g. Alinane Banda")
+                        reg_email = st.text_input("Email / Mobile", placeholder="e.g. alinane@gmail.com")
+                        reg_dist = st.selectbox("Your District", list(MALAWI_DISTRICTS.keys()))
+                        reg_pw1 = st.text_input("Password", type="password")
+                        reg_pw2 = st.text_input("Confirm Password", type="password")
+                        btn_f_reg = st.form_submit_button("Create Farmer Account →", use_container_width=True)
+
+                    if btn_f_reg:
+                        if not reg_name or not reg_email or not reg_pw1:
+                            st.warning("All fields are required.")
+                        elif reg_pw1 != reg_pw2:
+                            st.error("Passwords do not match.")
+                        elif len(reg_pw1) < 6:
+                            st.error("Password must be at least 6 characters.")
+                        else:
+                            if db_register(reg_name, reg_email, reg_pw1, role="Farmer", district=reg_dist):
+                                st.success("Account created successfully! Please sign in.")
+                            else:
+                                st.error("Email/Mobile already registered.")
+
+                with f_tab_demo:
+                    st.info("Judge or visitor demonstration:")
+                    if st.button("🌟 Launch Farmer Demo (1-Click)", use_container_width=True, type="primary"):
+                        st.session_state.auth_user = {
+                            "name": "Kondwani Banda (Smallholder)",
+                            "role": "Farmer",
+                            "district": "Lilongwe (Capital)"
+                        }
                         st.rerun()
-                    else:
-                        st.error("Invalid credentials. Try fast demo access below.")
 
-        with tab_signup:
-            with st.form("auth_reg"):
-                r_name = st.text_input("Full Official Name", placeholder="e.g. Limbani Phiri")
-                r_email = st.text_input("Email / Mobile Identifier", placeholder="e.g. limbani@gmail.com")
-                r_role = st.selectbox("Assigned Role", ["Smallholder Farmer", "Agricultural Extension Officer (AEDO)"])
-                r_district = st.selectbox("Operational District", list(MALAWI_DISTRICTS.keys()))
-                r_pass = st.text_input("Create Password", type="password")
-                r_pass_c = st.text_input("Confirm Password", type="password")
-                btn_r = st.form_submit_button("Register Account →", use_container_width=True)
+    # =======================================================================
+    # PORTAL 2: MINISTRY EXTENSION OFFICER DEDICATED LOGIN
+    # =======================================================================
+    else:
 
-            if btn_r:
-                if not r_name or not r_email or not r_pass:
-                    st.warning("All fields are mandatory.")
-                elif r_pass != r_pass_c:
-                    st.error("Passwords do not match.")
-                elif len(r_pass) < 6:
-                    st.error("Password must be at least 6 characters.")
-                else:
-                    role_type = "Officer" if "Officer" in r_role else "Farmer"
-                    if db_register(r_name, r_email, r_pass, role=role_type, district=r_district):
-                        st.success("Account provisioned! Please click Sign In tab.")
-                    else:
-                        st.error("Email or mobile already registered.")
+        col_o_info, col_o_auth = st.columns([1.2, 0.9], gap="large")
 
-        with tab_demo:
-            st.info("Demonstrating for innovation judges or evaluators? Select an instant persona:")
-            d1, d2 = st.columns(2)
-            with d1:
-                if st.button("👨‍🌾 Farmer Persona", use_container_width=True):
-                    st.session_state.auth_user = {
-                        "name": "Kondwani Banda (Smallholder)",
-                        "role": "Farmer",
-                        "district": "Lilongwe (Capital)"
-                    }
-                    st.rerun()
-            with d2:
-                if st.button("🧑‍💼 Officer Persona", use_container_width=True, type="primary"):
-                    st.session_state.auth_user = {
-                        "name": "Chimwemwe Phiri (AEDO)",
-                        "role": "Officer",
-                        "district": "Lilongwe (Capital)"
-                    }
-                    st.rerun()
+        with col_o_info:
+            st.markdown(
+                """
+                <div style="color:#A7F3D0; font-size:12px; font-weight:800; letter-spacing:1.5px; margin-bottom:8px;">
+                    MINISTRY OF AGRICULTURE · SURVEILLANCE DESK
+                </div>
+                <h1 style="color:white; font-size:42px; line-height:1.15; margin-bottom:14px;">
+                    National Epidemiological & Extension Surveillance.
+                </h1>
+                <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
+                    Official portal for accredited <strong>Agricultural Extension Development Officers (AEDOs)</strong>,
+                    District Agricultural Development Officers (DADOs), and researchers. Inspect real-time disease reports,
+                    geospatial hotspot clusters, and dispatch direct advisory alerts.
+                </p>
+                """,
+                unsafe_allow_html=True
+            )
 
-        st.markdown("</div>", unsafe_allow_html=True)
+            oa1, oa2 = st.columns(2)
+            with oa1:
+                st.markdown(
+                    """
+                    <div class="feature-tile">
+                        <div style="font-size:24px; margin-bottom:6px;">🗺️</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">National Outbreak Map</div>
+                        <div style="color:#576C60; font-size:12.5px;">Live GPS coordinates tracking foliar pathogen spread across Malawi.</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            with oa2:
+                st.markdown(
+                    """
+                    <div class="feature-tile">
+                        <div style="font-size:24px; margin-bottom:6px;">📢</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">Advisory Broadcaster</div>
+                        <div style="color:#576C60; font-size:12.5px;">Send SMS alerts to all registered farmers in high-risk EPAs.</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        with col_o_auth:
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div style="color:#CE1126; font-weight:800; font-size:11px; letter-spacing:1.5px;">
+                        OFFICIAL OFFICER CLEARANCE
+                    </div>
+                    <h3 style="color:#0C2618; margin:2px 0 10px 0;">Ministry Officer Sign In</h3>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                o_tab_in, o_tab_up, o_tab_demo = st.tabs(["Officer Sign In", "Register Personnel", "🚀 Officer Demo"])
+
+                with o_tab_in:
+                    with st.form("form_officer_login"):
+                        o_email = st.text_input("Ministry Official Email", placeholder="e.g. officer@moa.gov.mw")
+                        o_pw = st.text_input("Password", type="password")
+                        o_pin = st.text_input("Service Clearance PIN", type="password", placeholder="Enter 4-digit PIN (7111)")
+                        btn_o_login = st.form_submit_button("Authenticate Officer Credentials →", use_container_width=True)
+
+                    if btn_o_login:
+                        if not o_email or not o_pw or not o_pin:
+                            st.warning("Please provide email, password, and clearance PIN.")
+                        elif o_pin != OFFICER_SERVICE_PIN:
+                            st.error("❌ Invalid Ministry Clearance PIN. Access denied.")
+                        else:
+                            user = db_authenticate(o_email, o_pw)
+                            if user:
+                                if user["role"] != "Officer":
+                                    st.error("🚫 Access Denied: This account is registered as a Farmer. Please use the Farmer Portal.")
+                                else:
+                                    st.session_state.auth_user = user
+                                    st.rerun()
+                            else:
+                                st.error("Account not found. Use Officer Demo tab below to test.")
+
+                with o_tab_up:
+                    with st.form("form_officer_reg"):
+                        o_reg_name = st.text_input("Full Official Name", placeholder="e.g. Chimwemwe Phiri")
+                        o_reg_email = st.text_input("Ministry / Staff Email", placeholder="e.g. cphiri@moa.gov.mw")
+                        o_reg_dist = st.selectbox("Assigned District / ADD", list(MALAWI_DISTRICTS.keys()))
+                        o_reg_pin = st.text_input("Ministry Authorisation PIN", type="password", placeholder="Enter 7111")
+                        o_reg_pw1 = st.text_input("Password", type="password")
+                        o_reg_pw2 = st.text_input("Confirm Password", type="password")
+                        btn_o_reg = st.form_submit_button("Register Officer Account →", use_container_width=True)
+
+                    if btn_o_reg:
+                        if not o_reg_name or not o_reg_email or not o_reg_pw1:
+                            st.warning("All fields are mandatory.")
+                        elif o_reg_pin != OFFICER_SERVICE_PIN:
+                            st.error("Invalid Authorisation PIN. Registration restricted to authorized personnel.")
+                        elif o_reg_pw1 != o_reg_pw2:
+                            st.error("Passwords do not match.")
+                        else:
+                            if db_register(o_reg_name, o_reg_email, o_reg_pw1, role="Officer", district=o_reg_dist):
+                                st.success("Officer account provisioned! Please sign in.")
+                            else:
+                                st.error("Email already registered.")
+
+                with o_tab_demo:
+                    st.info("Demonstrating for evaluators or judges:")
+                    if st.button("🌟 Launch Extension Officer Demo (1-Click)", use_container_width=True, type="primary"):
+                        st.session_state.auth_user = {
+                            "name": "Chimwemwe Phiri (AEDO)",
+                            "role": "Officer",
+                            "district": "Lilongwe (Capital)"
+                        }
+                        st.rerun()
 
     st.markdown(
         """
         <div class="app-footer">
-            <strong>AgriWise Malawi</strong> · National Agriculture Innovation Showcase · Ministry of Agriculture & Food Security Guidelines · © 2026
+            <strong>AgriWise Malawi</strong> · Ministry of Agriculture & Extension Services Standards · © 2026
         </div>
         """,
         unsafe_allow_html=True
@@ -885,54 +953,48 @@ if st.session_state.auth_user is None:
 
 
 # ---------------------------------------------------------------------------
-# 9. ENTERPRISE AUTHENTICATED DASHBOARD (DUAL-PERSONA SUITE)
+# 9. AUTHENTICATED WORKSPACES (COMPLETELY SEPARATE EXPERIENCES)
 # ---------------------------------------------------------------------------
 else:
 
     current_user = st.session_state.auth_user
 
-    with st.sidebar:
-        st.markdown(
-            f"""
-            <div style="background:#EBF7EE; border-radius:12px; padding:14px; border:1px solid #CDE8D4; margin-bottom:14px;">
-                <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">AUTHENTICATED SESSION</div>
-                <div style="font-size:16px; font-weight:800; color:#0C2618; margin-top:2px;">{current_user['name']}</div>
-                <div style="font-size:12px; color:#516D5D;">📍 {current_user['district']}</div>
-                <div style="display:inline-block; margin-top:6px; font-size:11px; font-weight:700; background:#007A3D; color:white; padding:2px 8px; border-radius:4px;">
-                    {'EXTENSION OFFICER (AEDO)' if current_user['role'] == 'Officer' else 'REGISTERED FARMER'}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown("#### 🔄 Persona Switcher")
-        switch_choice = st.radio(
-            "Toggle Operating Perspective",
-            ["👨‍🌾 Smallholder Farmer Suite", "🧑‍💼 Extension Surveillance Desk"],
-            index=1 if current_user["role"] == "Officer" else 0
-        )
-        current_user["role"] = "Officer" if "Officer" in switch_choice else "Farmer"
-
-        st.markdown("---")
-        st.write("📞 **National Helpline:** 7111 (Toll-Free)")
-        st.write("🌾 **Extension Broadcast:** Farm Radio Trust")
-
-        if st.button("🚪 Terminate Session", use_container_width=True):
-            st.session_state.auth_user = None
-            st.session_state.active_scan = None
-            st.rerun()
-
-    # -----------------------------------------------------------------------
-    # PERSPECTIVE A: AGRICULTURAL EXTENSION OFFICER SURVEILLANCE
-    # -----------------------------------------------------------------------
+    # =======================================================================
+    # WORKSPACE A: EXTENSION OFFICER SURVEILLANCE SUITE
+    # =======================================================================
     if current_user["role"] == "Officer":
+
+        with st.sidebar:
+            st.markdown(
+                f"""
+                <div style="background:#EBF7EE; border-radius:12px; padding:14px; border:1px solid #CDE8D4; margin-bottom:14px;">
+                    <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">MINISTRY CLEARANCE</div>
+                    <div style="font-size:16px; font-weight:800; color:#0C2618; margin-top:2px;">{current_user['name']}</div>
+                    <div style="font-size:12px; color:#516D5D;">📍 Station: {current_user['district']}</div>
+                    <div style="display:inline-block; margin-top:6px; font-size:11px; font-weight:700; background:#007A3D; color:white; padding:2px 8px; border-radius:4px;">
+                        EXTENSION OFFICER (AEDO)
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            st.markdown("#### 📂 Officer Modules")
+            st.write("🔍 **Surveillance:** District Outbreak Spotter")
+            st.write("🗺️ **Mapping:** Geospatial GPS Telemetry")
+            st.write("📢 **Alerts:** Direct SMS Broadcaster")
+            st.markdown("---")
+            st.write("📞 **National Helpline:** 7111 (Toll-Free)")
+
+            if st.button("🚪 Sign Out (Officer)", use_container_width=True):
+                st.session_state.auth_user = None
+                st.rerun()
 
         st.markdown(
             f"""
             <div class="exec-banner">
                 <div style="font-size:11.5px; font-weight:800; letter-spacing:1.5px; color:#A7F3D0;">
-                    MINISTRY OF AGRICULTURE · REGIONAL SURVEILLANCE DESK
+                    MINISTRY OF AGRICULTURE · EXTENSION SURVEILLANCE DESK
                 </div>
                 <h1 style="color:white; margin:6px 0 10px 0; font-size:32px;">
                     District Epidemiological Surveillance & Early Warning
@@ -974,7 +1036,6 @@ else:
             disp_top = DISPLAY_NAMES_EN.get(top_pathogen, top_pathogen)
             m2.metric("Dominant Pathogen", disp_top)
 
-            # Mathematical Outbreak Index
             if top_pathogen in ["maize_northern_leaf_blight", "maize_common_rust"] and total_district_scans >= 2:
                 alert_badge = '<span class="badge-status badge-crit">🔴 CRITICAL OUTBREAK ALERT</span>'
             elif top_pathogen != "maize_healthy" and total_district_scans >= 1:
@@ -1052,10 +1113,59 @@ else:
             if b_submit:
                 st.success(f"✅ Advisory successfully queued for broadcast to all registered smallholders in {b_dist} via the TNM/Airtel gateway!")
 
-    # -----------------------------------------------------------------------
-    # PERSPECTIVE B: SMALLHOLDER FARMER INTELLIGENCE SUITE
-    # -----------------------------------------------------------------------
+    # =======================================================================
+    # WORKSPACE B: SMALLHOLDER FARMER SUITE (PURE FARMER EXPERIENCE)
+    # =======================================================================
     else:
+
+        with st.sidebar:
+            st.markdown(
+                f"""
+                <div style="background:#EBF7EE; border-radius:12px; padding:14px; border:1px solid #CDE8D4; margin-bottom:14px;">
+                    <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">FARMER WORKSPACE</div>
+                    <div style="font-size:16px; font-weight:800; color:#0C2618; margin-top:2px;">{current_user['name']}</div>
+                    <div style="font-size:12px; color:#516D5D;">📍 {current_user['district']}</div>
+                    <div style="display:inline-block; margin-top:6px; font-size:11px; font-weight:700; background:#007A3D; color:white; padding:2px 8px; border-radius:4px;">
+                        REGISTERED SMALLHOLDER
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            st.markdown("#### 🌽 Farmer Tools")
+            st.write("📸 **Diagnostic:** AI Maize Leaf Scanner")
+            st.write("🌦️ **Weather:** Real-time District Satellite")
+            st.write("⚖️ **Calculator:** AIP NPK & Urea Inputs")
+            st.write("📱 **Offline:** *384*265# USSD Simulator")
+            st.markdown("---")
+            st.write("📞 **Toll-Free Hotline:** 7111")
+            st.write("🌾 **Farm Radio Trust:** Radio Advisory")
+
+            if st.button("🚪 Sign Out (Farmer)", use_container_width=True):
+                st.session_state.auth_user = None
+                st.session_state.active_scan = None
+                st.rerun()
+
+        # Farmer Outbreak Warning Banner
+        df_surv = db_fetch_surveillance()
+        dist_reports = df_surv[df_surv["district"] == current_user["district"]]
+        dist_diseases = dist_reports[dist_reports["disease_code"] != "maize_healthy"]["disease_code"].value_counts()
+
+        if not dist_diseases.empty:
+            hot_disease = DISPLAY_NAMES_EN.get(dist_diseases.index[0], dist_diseases.index[0])
+            st.markdown(
+                f"""
+                <div style="background:#FFF7ED; border-left:5px solid #EA580C; padding:12px 18px; border-radius:10px; margin-bottom:18px;">
+                    <strong style="color:#9A3412;">⚠️ Community Outbreak Notice ({current_user['district']}):</strong><br>
+                    <span style="color:#7C2D12; font-size:13.5px;">
+                        Extension officers report active cases of <strong>{hot_disease}</strong> in your area.
+                        Scan your maize leaves below to catch infections early.
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         st.markdown(
             """
@@ -1117,7 +1227,6 @@ else:
                                     "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
                                 }
 
-                                # Persist to national surveillance if verified maize
                                 if p_class != "non_maize_leaf":
                                     d_meta = MALAWI_DISTRICTS.get(current_user["district"], {"lat": -13.98, "lon": 33.78})
                                     rep_code = db_record_scan(
@@ -1142,9 +1251,6 @@ else:
                             name_disp = DISPLAY_NAMES_NY[c_key] if is_ny else DISPLAY_NAMES_EN[c_key]
                             proto = AGRO_PROTOCOLS[c_key]
 
-                            # -------------------------------------------------------
-                            # NON-MAIZE REJECTION: RECOMMENDATION: NOT APPLICABLE
-                            # -------------------------------------------------------
                             if c_key == "non_maize_leaf":
                                 st.error(f"❌ {name_disp}")
                                 st.warning(
@@ -1175,9 +1281,6 @@ else:
 
                                 st.info(f"**Prescription Status:** {proto['prescriptions']}")
 
-                            # -------------------------------------------------------
-                            # VERIFIED MAIZE LEAF: FULL RECOMMENDATIONS
-                            # -------------------------------------------------------
                             else:
                                 if c_key == "maize_healthy":
                                     st.success(f"✅ {name_disp}")
@@ -1402,7 +1505,7 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
     st.markdown(
         """
         <div class="app-footer">
-            <strong>AgriWise Malawi</strong> · Ministry of Agriculture & Food Security Standards · Powered by Streamlit & AI · © 2026
+            <strong>AgriWise Malawi</strong> · Ministry of Agriculture Standards · Powered by Streamlit & AI · © 2026
         </div>
         """,
         unsafe_allow_html=True
