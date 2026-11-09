@@ -3,6 +3,7 @@
 AGRIWISE MALAWI - NATIONAL AGRICULTURAL INTELLIGENCE SYSTEM
 Republic of Malawi · Ministry of Agriculture & Extension Services
 Dedicated Portals: Smallholder Farming Suite & Ministry Surveillance Desk
+Full Dual-Language Localization (English & Chichewa) with Back Navigation
 =============================================================================
 """
 
@@ -197,7 +198,7 @@ MALAWI_DISTRICTS = {
 
 
 # ---------------------------------------------------------------------------
-# 3. PREMIUM ENTERPRISE SYSTEM STYLING (HIGH CONTRAST & VISIBILITY)
+# 3. PREMIUM ENTERPRISE SYSTEM STYLING
 # ---------------------------------------------------------------------------
 def get_background_css():
     if os.path.exists(BG_IMAGE):
@@ -244,7 +245,6 @@ st.markdown(
         padding-bottom: 2.5rem;
     }}
 
-    /* Top National Header */
     .nat-ribbon {{
         display: inline-flex;
         align-items: center;
@@ -336,9 +336,7 @@ st.markdown(
         box-shadow: inset 0 0 16px rgba(0, 255, 102, 0.15);
     }}
 
-    /* ==========================================================
-       CRITICAL FIX: METRIC CARD TEXT VISIBILITY (SOLID HIGH CONTRAST)
-       ========================================================== */
+    /* Metric Cards Contrast */
     div[data-testid="stMetric"] {{
         background: #FFFFFF !important;
         border: 2px solid #C4DCCB !important;
@@ -347,34 +345,25 @@ st.markdown(
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
     }}
 
-    /* Force all text inside white metric cards to bold dark green / black */
     div[data-testid="stMetric"] * {{
         color: #072614 !important;
     }}
 
-    div[data-testid="stMetricLabel"] {{
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] * {{
         color: #2F4D38 !important;
         font-size: 13.5px !important;
         font-weight: 800 !important;
     }}
 
-    div[data-testid="stMetricLabel"] * {{
-        color: #2F4D38 !important;
-        font-weight: 800 !important;
-    }}
-
-    div[data-testid="stMetricValue"] {{
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] * {{
         color: #072614 !important;
         font-weight: 800 !important;
         font-size: 28px !important;
     }}
 
-    div[data-testid="stMetricValue"] * {{
-        color: #072614 !important;
-        font-weight: 800 !important;
-    }}
-
-    /* Form labels & tabs readability against dark background */
+    /* Form labels & inputs */
     div[data-testid="stForm"] label,
     div[data-testid="stTextInput"] label,
     div[data-testid="stSelectbox"] label,
@@ -567,7 +556,8 @@ AGRO_PROTOCOLS = {
             "Chonde jambulani bwino tsamba la chimanga chapafupi pomwe pali kuwala kwabwino.",
             "Pewani zithunzi za dothi, anthu, kapena mbeu zina zomwe sizachimanga."
         ],
-        "prescriptions": "Not Applicable (N/A) - No chemical or agronomic intervention required."
+        "prescriptions_en": "Not Applicable (N/A) - No chemical or agronomic intervention required.",
+        "prescriptions_ny": "Siyikugwira Ntchito (N/A) - Palibe mankhwala oyenera kuthiridwa."
     },
     "maize_healthy": {
         "en_title": "Healthy Maize Foliage (No Pathology)",
@@ -585,7 +575,8 @@ AGRO_PROTOCOLS = {
             "Palirani m'munda mwanu munthawi yake kuti muchepetse udzu wolandana chakudya.",
             "Yang'anani mbozi ya Nkhungu (Fall Armyworm) pakati pa masamba sabata iliyonse."
         ],
-        "prescriptions": "Standard Nutrition: Top dressing Urea 46% N. No fungicide required."
+        "prescriptions_en": "Standard Nutrition: Top dressing Urea 46% N. No fungicide required.",
+        "prescriptions_ny": "Feteleza wa Urea 46% N. Palibe mankhwala a bowa ofunika."
     },
     "maize_cercospora_leaf_spot": {
         "en_title": "Cercospora Leaf Spot (Gray Leaf Spot)",
@@ -603,7 +594,8 @@ AGRO_PROTOCOLS = {
             "Bweretsani pansi zotsalira za chimanga mukakolola kuwononga tizilombo toyambitsa matenda.",
             "Pezani mankhwala a Azoxystrobin ku Farmers World / Kulima Gold ngati matenda achuluka."
         ],
-        "prescriptions": "Amistar Top (Azoxystrobin + Difenoconazole) or Nativo 300 SC."
+        "prescriptions_en": "Amistar Top (Azoxystrobin + Difenoconazole) or Nativo 300 SC.",
+        "prescriptions_ny": "Mankhwala a Amistar Top kapena Nativo 300 SC."
     },
     "maize_common_rust": {
         "en_title": "Common Maize Rust (Puccinia sorghi)",
@@ -621,7 +613,8 @@ AGRO_PROTOCOLS = {
             "Gwiritsani ntchito mbeu zolimba za hybrid zochokera kumakampani ovomerezeka.",
             "Chepetsani kuthithikana kwa mbeu kuti mphepo iziyenda bwino."
         ],
-        "prescriptions": "Mancozeb 80% WP or Tebuconazole formulations (Folicur 250 EC)."
+        "prescriptions_en": "Mancozeb 80% WP or Tebuconazole formulations (Folicur 250 EC).",
+        "prescriptions_ny": "Mancozeb 80% WP kapena Folicur 250 EC."
     },
     "maize_northern_leaf_blight": {
         "en_title": "Northern Corn Leaf Blight (Exserohilum turcicum)",
@@ -639,7 +632,8 @@ AGRO_PROTOCOLS = {
             "Limanitsani munda mozama mukakolola kukwirira tizilombo ta matenda m'nthaka.",
             "Thirirani mankhwala a Folicur kapena Pyraclostrobin kuteteza masamba apamwamba."
         ],
-        "prescriptions": "Bellis (Pyraclostrobin + Boscalid) or Folicur 250 EC."
+        "prescriptions_en": "Bellis (Pyraclostrobin + Boscalid) or Folicur 250 EC.",
+        "prescriptions_ny": "Mankhwala a Bellis kapena Folicur 250 EC."
     }
 }
 
@@ -669,7 +663,7 @@ def render_top_navigation():
                     <div class="brand-emblem">🌽</div>
                     <div>
                         <div class="brand-h1">AgriWise Malawi</div>
-                        <div class="brand-caption">NATIONAL AGRICULTURAL INTELLIGENCE SYSTEM</div>
+                        <div class="brand-caption">NATIONAL AGRICULTURAL INTELLIGENCE SYSTEM · MLIMI WANZERU</div>
                     </div>
                 </div>
             </div>
@@ -678,7 +672,7 @@ def render_top_navigation():
         )
     with col_lang:
         lang_sel = st.radio(
-            "Language",
+            "Chilankhulo / Language",
             ["English 🇬🇧", "Chichewa 🇲🇼"],
             horizontal=True,
             index=0 if st.session_state.lang == "English" else 1,
@@ -699,6 +693,8 @@ st.markdown(
 )
 render_top_navigation()
 
+is_ny = (st.session_state.lang == "Chichewa")
+
 
 # ---------------------------------------------------------------------------
 # 8. TWO SEPARATE PORTALS (FARMER PORTAL & OFFICER DESK)
@@ -707,12 +703,14 @@ if st.session_state.auth_user is None:
 
     c_p1, c_p2 = st.columns(2)
     with c_p1:
-        if st.button("👨‍🌾 Smallholder Farmer Portal (Mlimi Wanzeru)", use_container_width=True,
+        f_portal_label = "👨‍🌾 Chikwanja cha Alimi (Mlimi Wanzeru)" if is_ny else "👨‍🌾 Smallholder Farmer Portal (Mlimi Wanzeru)"
+        if st.button(f_portal_label, use_container_width=True,
                      type="primary" if st.session_state.active_portal == "Farmer" else "secondary"):
             st.session_state.active_portal = "Farmer"
             st.rerun()
     with c_p2:
-        if st.button("🏛️ Ministry Extension Officer Portal (AEDO Desk)", use_container_width=True,
+        o_portal_label = "🏛️ Chikwanja cha Alangizi a Zaulimi (AEDO Desk)" if is_ny else "🏛️ Ministry Extension Officer Portal (AEDO Desk)"
+        if st.button(o_portal_label, use_container_width=True,
                      type="primary" if st.session_state.active_portal == "Officer" else "secondary"):
             st.session_state.active_portal = "Officer"
             st.rerun()
@@ -727,7 +725,7 @@ if st.session_state.auth_user is None:
         col_f_info, col_f_auth = st.columns([1.2, 0.9], gap="large")
 
         with col_f_info:
-            if st.session_state.lang == "English":
+            if not is_ny:
                 st.markdown(
                     """
                     <div style="color:#A4DEB4; font-size:12px; font-weight:800; letter-spacing:1px; margin-bottom:8px;">
@@ -748,14 +746,14 @@ if st.session_state.auth_user is None:
                 st.markdown(
                     """
                     <div style="color:#A4DEB4; font-size:12px; font-weight:800; letter-spacing:1px; margin-bottom:8px;">
-                        CHIKWANJA CHA ALIMI
+                        CHIKWANJA CHA ALIMI M'MALAWI
                     </div>
                     <h1 style="color:white; font-size:42px; line-height:1.15; margin-bottom:14px;">
-                        Thandizo la Ulimi Wamtsogolo kwa Alimi m'Malawi.
+                        Thandizo la Ulimi Wamtsogolo kwa Alimi.
                     </h1>
                     <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
-                        Landirani uphungu waposachedwa: jambulani tsamba la chimanga kuzindikira matenda,
-                        pezani mankhwala ovomerezeka ndi boma, ndi kuwona momwe nyengo ilili lero m'boma lanu.
+                        Landirani uphungu waposachedwa: jambulani tsamba la chimanga kuzindikira matenda mwachangu,
+                        pezani mankhwala ovomerezeka ndi unduna wa zaulimi, ndi kuwona momwe nyengo ilili lero m'boma lanu.
                     </p>
                     """,
                     unsafe_allow_html=True
@@ -763,23 +761,27 @@ if st.session_state.auth_user is None:
 
             fa1, fa2 = st.columns(2)
             with fa1:
+                title_card1 = "Dokotala wa Masamba" if is_ny else "Leaf Camera Doctor"
+                desc_card1 = "Amapenda matenda a Cercospora, Chimbulimbuli, ndi Chikwangwani, komanso amakana zithunzi zomwe sizamasamba." if is_ny else "Detects Cercospora, Common Rust, Blight & rejects non-leaf images."
                 st.markdown(
-                    """
+                    f"""
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">📸</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">Leaf Camera Doctor</div>
-                        <div style="color:#576C60; font-size:12.5px;">Detects Cercospora, Common Rust, Blight & rejects non-leaf images.</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">{title_card1}</div>
+                        <div style="color:#576C60; font-size:12.5px;">{desc_card1}</div>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
             with fa2:
+                title_card2 = "Uthenga wa Nyengo" if is_ny else "District Weather Advisory"
+                desc_card2 = "Zanyengo zam'maiko a satellite, mlingo wa mvula, ndi machenjezo anthawi yabwino kuthira mankhwala." if is_ny else "Real-time satellite feeds, rainfall tracking, and chemical spray condition alerts."
                 st.markdown(
-                    """
+                    f"""
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">🌦️</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">District Weather Advisory</div>
-                        <div style="color:#576C60; font-size:12.5px;">Real-time satellite feeds, rainfall tracking, and chemical spray condition alerts.</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">{title_card2}</div>
+                        <div style="color:#576C60; font-size:12.5px;">{desc_card2}</div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -787,38 +789,46 @@ if st.session_state.auth_user is None:
 
         with col_f_auth:
             with st.container(border=True):
-                # CRISP WHITE HEADING (HIGH VISIBILITY)
+                auth_badge = "CHIKWANJA CHA ALIMI" if is_ny else "FARMER ACCESS PORTAL"
+                auth_heading = "Lowani m'munda mwanu" if is_ny else "Sign in to your farm"
+                auth_desc = "Lowetsani zinsinsi zanu kuti muyambe kuyezetsa mbeu." if is_ny else "Enter your credentials to access field crop doctor and telemetry."
+
                 st.markdown(
-                    """
+                    f"""
                     <div style="color:#4ADE80; font-weight:800; font-size:12px; letter-spacing:1.5px; text-transform:uppercase;">
-                        FARMER ACCESS PORTAL
+                        {auth_badge}
                     </div>
                     <h2 style="color:#FFFFFF !important; margin:4px 0 6px 0; font-size:27px; font-weight:800;">
-                        Sign in to your farm
+                        {auth_heading}
                     </h2>
                     <p style="color:#D5E8DC !important; font-size:13.5px; margin-bottom:16px;">
-                        Enter your credentials to access field crop doctor and telemetry.
+                        {auth_desc}
                     </p>
                     """,
                     unsafe_allow_html=True
                 )
 
-                f_tab_in, f_tab_up, f_tab_demo = st.tabs(["Farmer Sign In", "New Farmer Registration", "🚀 Quick Demo"])
+                tab_labels_f = ["Lowani (Sign In)", "Lembetsani Mlimi", "🚀 Yezani (Quick Demo)"] if is_ny else ["Farmer Sign In", "New Farmer Registration", "🚀 Quick Demo"]
+                f_tab_in, f_tab_up, f_tab_demo = st.tabs(tab_labels_f)
 
                 with f_tab_in:
                     with st.form("form_farmer_login"):
-                        f_email = st.text_input("Farmer Email or Mobile", placeholder="e.g. kondwani@gmail.com")
-                        f_pw = st.text_input("Password", type="password")
-                        btn_f_login = st.form_submit_button("Sign In to Farm Portal →", use_container_width=True)
+                        email_label = "Imelo kapena Foni ya Mlimi" if is_ny else "Farmer Email or Mobile"
+                        pw_label = "Mawu Achinsinsi (Password)" if is_ny else "Password"
+                        btn_login_label = "Lowani ku Chikwanja cha Ulimi →" if is_ny else "Sign In to Farm Portal →"
+
+                        f_email = st.text_input(email_label, placeholder="e.g. kondwani@gmail.com")
+                        f_pw = st.text_input(pw_label, type="password")
+                        btn_f_login = st.form_submit_button(btn_login_label, use_container_width=True)
 
                     if btn_f_login:
                         if not f_email or not f_pw:
-                            st.warning("Please provide both email/phone and password.")
+                            st.warning("Chonde lembani imelo ndi mawu achinsinsi." if is_ny else "Please provide both email/phone and password.")
                         else:
                             user = db_authenticate(f_email, f_pw)
                             if user:
                                 if user["role"] == "Officer":
-                                    st.info("ℹ️ You are registered as an Extension Officer. Directing to Officer Portal...")
+                                    st.info("ℹ️ Ndinu Mlangizi wa Zaulimi. Tikukutumizani ku Chikwanja cha Alangizi..." if is_ny else "ℹ️ You are registered as an Extension Officer. Directing to Officer Portal...")
                                     st.session_state.active_portal = "Officer"
                                     st.session_state.auth_user = user
                                     st.rerun()
@@ -826,33 +836,39 @@ if st.session_state.auth_user is None:
                                     st.session_state.auth_user = user
                                     st.rerun()
                             else:
-                                st.error("Invalid credentials. Try quick demo or create account.")
+                                st.error("Zinsinsi sizolondola. Yezani pa demo kapena lembetsani." if is_ny else "Invalid credentials. Try quick demo or create account.")
 
                 with f_tab_up:
                     with st.form("form_farmer_reg"):
-                        reg_name = st.text_input("Full Name", placeholder="e.g. Alinane Banda")
-                        reg_email = st.text_input("Email / Mobile", placeholder="e.g. alinane@gmail.com")
-                        reg_dist = st.selectbox("Your District", list(MALAWI_DISTRICTS.keys()))
-                        reg_pw1 = st.text_input("Password", type="password")
-                        reg_pw2 = st.text_input("Confirm Password", type="password")
-                        btn_f_reg = st.form_submit_button("Create Farmer Account →", use_container_width=True)
+                        name_label = "Dzina Lonse" if is_ny else "Full Name"
+                        dist_label = "Boma Lanu" if is_ny else "Your District"
+                        pw_c_label = "Tsimikizani Mawu Achinsinsi" if is_ny else "Confirm Password"
+                        btn_reg_label = "Pangani Akaunti ya Mlimi →" if is_ny else "Create Farmer Account →"
+
+                        reg_name = st.text_input(name_label, placeholder="e.g. Alinane Banda")
+                        reg_email = st.text_input(email_label, placeholder="e.g. alinane@gmail.com")
+                        reg_dist = st.selectbox(dist_label, list(MALAWI_DISTRICTS.keys()))
+                        reg_pw1 = st.text_input(pw_label, type="password")
+                        reg_pw2 = st.text_input(pw_c_label, type="password")
+                        btn_f_reg = st.form_submit_button(btn_reg_label, use_container_width=True)
 
                     if btn_f_reg:
                         if not reg_name or not reg_email or not reg_pw1:
-                            st.warning("All fields are required.")
+                            st.warning("Magawo onse ndi ofunika." if is_ny else "All fields are required.")
                         elif reg_pw1 != reg_pw2:
-                            st.error("Passwords do not match.")
+                            st.error("Mawu achinsinsi sakufanana." if is_ny else "Passwords do not match.")
                         elif len(reg_pw1) < 6:
-                            st.error("Password must be at least 6 characters.")
+                            st.error("Mawu achinsinsi ayenera kukhala ndi zilembo zosachepera 6." if is_ny else "Password must be at least 6 characters.")
                         else:
                             if db_register(reg_name, reg_email, reg_pw1, role="Farmer", district=reg_dist):
-                                st.success("Account created successfully! Please sign in.")
+                                st.success("Akaunti yapangidwa bwino! Chonde lowani." if is_ny else "Account created successfully! Please sign in.")
                             else:
-                                st.error("Email/Mobile already registered.")
+                                st.error("Imelo kapena nambala yalembetsedwa kale." if is_ny else "Email/Mobile already registered.")
 
                 with f_tab_demo:
-                    st.info("Direct demonstration access:")
-                    if st.button("🌟 Launch Farmer Demo (1-Click)", use_container_width=True, type="primary"):
+                    st.info("Kuwonetsa mwachangu m'Chichewa:" if is_ny else "Direct demonstration access:")
+                    demo_btn_text = "🌟 Yambani Demo ya Mlimi (1-Click)" if is_ny else "🌟 Launch Farmer Demo (1-Click)"
+                    if st.button(demo_btn_text, use_container_width=True, type="primary"):
                         st.session_state.auth_user = {
                             "name": "Kondwani Banda (Smallholder)",
                             "role": "Farmer",
@@ -868,22 +884,21 @@ if st.session_state.auth_user is None:
         col_o_info, col_o_auth = st.columns([1.2, 0.9], gap="large")
 
         with col_o_info:
-            if st.button("← Back to Farmer Portal", key="btn_back_farmer_top"):
+            back_to_farmer_label = "← Bwererani ku Chikwanja cha Alimi" if is_ny else "← Back to Farmer Portal"
+            if st.button(back_to_farmer_label, key="btn_back_farmer_top"):
                 st.session_state.active_portal = "Farmer"
                 st.rerun()
 
             st.markdown(
-                """
+                f"""
                 <div style="color:#A7F3D0; font-size:12px; font-weight:800; letter-spacing:1.5px; margin-top:10px; margin-bottom:8px;">
-                    MINISTRY OF AGRICULTURE · SURVEILLANCE DESK
+                    {'UNDUNA WA ZAULIMI · DESK YA ALANGIZI' if is_ny else 'MINISTRY OF AGRICULTURE · SURVEILLANCE DESK'}
                 </div>
                 <h1 style="color:white; font-size:42px; line-height:1.15; margin-bottom:14px;">
-                    National Epidemiological & Extension Surveillance.
+                    {'Kuwunika Matenda ndi Uphungu m\'Dziko Lonse.' if is_ny else 'National Epidemiological & Extension Surveillance.'}
                 </h1>
                 <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
-                    Official portal for accredited <strong>Agricultural Extension Development Officers (AEDOs)</strong>,
-                    District Agricultural Development Officers (DADOs), and researchers. Inspect real-time disease reports,
-                    geospatial hotspot clusters, and dispatch direct advisory alerts.
+                    {'Chikwanja chapadera cha Alangizi a Zaulimi (AEDOs) ndi akuluakulu a unduna wa zaulimi (DADOs). Onani momwe matenda akufalikira m\'Malawi lonse, ndikutumiza machenjezo a SMS kwa alimi.' if is_ny else 'Official portal for accredited Agricultural Extension Development Officers (AEDOs), District Agricultural Development Officers (DADOs), and researchers. Inspect real-time disease reports, geospatial hotspot clusters, and dispatch direct advisory alerts.'}
                 </p>
                 """,
                 unsafe_allow_html=True
@@ -892,22 +907,22 @@ if st.session_state.auth_user is None:
             oa1, oa2 = st.columns(2)
             with oa1:
                 st.markdown(
-                    """
+                    f"""
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">🗺️</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">National Outbreak Map</div>
-                        <div style="color:#576C60; font-size:12.5px;">Live GPS coordinates tracking foliar pathogen spread across Malawi.</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">{'Mapu a Matenda m\'Dziko' if is_ny else 'National Outbreak Map'}</div>
+                        <div style="color:#576C60; font-size:12.5px;">{'GPS yotsata momwe matenda a chimanga akufalikira m\'Malawi lonse.' if is_ny else 'Live GPS coordinates tracking foliar pathogen spread across Malawi.'}</div>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
             with oa2:
                 st.markdown(
-                    """
+                    f"""
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">📢</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">Advisory Broadcaster</div>
-                        <div style="color:#576C60; font-size:12.5px;">Send SMS alerts to all registered farmers in high-risk EPAs.</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">{'Kutumiza Machenjezo a SMS' if is_ny else 'Advisory Broadcaster'}</div>
+                        <div style="color:#576C60; font-size:12.5px;">{'Tumizani mauthenga a SMS kwa alimi onse m\'dera lomwe muli matenda.' if is_ny else 'Send SMS alerts to all registered farmers in high-risk EPAs.'}</div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -915,73 +930,74 @@ if st.session_state.auth_user is None:
 
         with col_o_auth:
             with st.container(border=True):
-                # CRISP WHITE HEADING (HIGH VISIBILITY)
                 st.markdown(
-                    """
+                    f"""
                     <div style="color:#FF6B6B; font-weight:800; font-size:12px; letter-spacing:1.5px; text-transform:uppercase;">
-                        OFFICIAL CLEARANCE REQUIRED
+                        {'CHILOLEZO CHAPADERA CHOFUNIKA' if is_ny else 'OFFICIAL CLEARANCE REQUIRED'}
                     </div>
                     <h2 style="color:#FFFFFF !important; margin:4px 0 6px 0; font-size:27px; font-weight:800;">
-                        Ministry Officer Sign In
+                        {'Lowani Monga Mlangizi' if is_ny else 'Ministry Officer Sign In'}
                     </h2>
                     <p style="color:#D5E8DC !important; font-size:13.5px; margin-bottom:16px;">
-                        Enter your staff credentials and Department Clearance Token.
+                        {'Lowetsani imelo ya unduna ndi Chidindo cha Chilolezo (Token).' if is_ny else 'Enter your staff credentials and Department Clearance Token.'}
                     </p>
                     """,
                     unsafe_allow_html=True
                 )
 
-                o_tab_in, o_tab_up, o_tab_demo = st.tabs(["Officer Sign In", "Register Personnel", "🚀 Officer Demo"])
+                tab_labels_o = ["Lowani Monga Mlangizi", "Lembetsani Mlangizi", "🚀 Demo ya Mlangizi"] if is_ny else ["Officer Sign In", "Register Personnel", "🚀 Officer Demo"]
+                o_tab_in, o_tab_up, o_tab_demo = st.tabs(tab_labels_o)
 
                 with o_tab_in:
                     with st.form("form_officer_login"):
-                        o_email = st.text_input("Ministry Official Email", placeholder="e.g. officer@moa.gov.mw")
-                        o_pw = st.text_input("Password", type="password")
-                        o_pin = st.text_input("Department Clearance Token", type="password", placeholder="Enter official token")
-                        btn_o_login = st.form_submit_button("Authenticate Officer Credentials →", use_container_width=True)
+                        o_email = st.text_input("Imelo ya Ntchito ya Unduna" if is_ny else "Ministry Official Email", placeholder="e.g. officer@moa.gov.mw")
+                        o_pw = st.text_input("Mawu Achinsinsi (Password)" if is_ny else "Password", type="password")
+                        o_pin = st.text_input("Chidindo cha Chilolezo (Token)" if is_ny else "Department Clearance Token", type="password", placeholder="Enter official token")
+                        btn_o_login = st.form_submit_button("Tsimikizani Chilolezo →" if is_ny else "Authenticate Officer Credentials →", use_container_width=True)
 
                     if btn_o_login:
                         if not o_email or not o_pw or not o_pin:
-                            st.warning("Please provide email, password, and clearance token.")
+                            st.warning("Chonde lembani imelo, mawu achinsinsi ndi chidindo cha chilolezo." if is_ny else "Please provide email, password, and clearance token.")
                         elif o_pin != OFFICER_SERVICE_KEY:
-                            st.error("❌ Invalid Ministry Clearance Token. Access denied.")
+                            st.error("❌ Chidindo cha chilolezo sicholondola. Kukanidwa kulowa." if is_ny else "❌ Invalid Ministry Clearance Token. Access denied.")
                         else:
                             user = db_authenticate(o_email, o_pw)
                             if user:
                                 if user["role"] != "Officer":
-                                    st.error("🚫 Access Denied: This account is registered as a Farmer. Please use the Farmer Portal.")
+                                    st.error("🚫 Kukanidwa: Akauntiyi ndi ya Mlimi. Chonde gwiritsani ntchito Chikwanja cha Alimi." if is_ny else "🚫 Access Denied: This account is registered as a Farmer. Please use the Farmer Portal.")
                                 else:
                                     st.session_state.auth_user = user
                                     st.rerun()
                             else:
-                                st.error("Account not found. Use Officer Demo tab below to test.")
+                                st.error("Akaunti sinapezeke. Gwiritsani ntchito Demo pansipa." if is_ny else "Account not found. Use Officer Demo tab below to test.")
 
                 with o_tab_up:
                     with st.form("form_officer_reg"):
-                        o_reg_name = st.text_input("Full Official Name", placeholder="e.g. Chimwemwe Phiri")
-                        o_reg_email = st.text_input("Ministry / Staff Email", placeholder="e.g. cphiri@moa.gov.mw")
-                        o_reg_dist = st.selectbox("Assigned District / ADD", list(MALAWI_DISTRICTS.keys()))
-                        o_reg_pin = st.text_input("Ministry Authorisation Token", type="password", placeholder="Enter issued authorization token")
-                        o_reg_pw1 = st.text_input("Password", type="password")
-                        o_reg_pw2 = st.text_input("Confirm Password", type="password")
-                        btn_o_reg = st.form_submit_button("Register Officer Account →", use_container_width=True)
+                        o_reg_name = st.text_input("Dzina Lonse la Mlangizi" if is_ny else "Full Official Name", placeholder="e.g. Chimwemwe Phiri")
+                        o_reg_email = st.text_input("Imelo ya Unduna" if is_ny else "Ministry / Staff Email", placeholder="e.g. cphiri@moa.gov.mw")
+                        o_reg_dist = st.selectbox("Boma Lomwe Mukugwira Ntchito" if is_ny else "Assigned District / ADD", list(MALAWI_DISTRICTS.keys()))
+                        o_reg_pin = st.text_input("Chidindo cha Chilolezo (Authorisation Token)" if is_ny else "Ministry Authorisation Token", type="password", placeholder="Enter authorization token")
+                        o_reg_pw1 = st.text_input("Mawu Achinsinsi" if is_ny else "Password", type="password")
+                        o_reg_pw2 = st.text_input("Tsimikizani Mawu Achinsinsi" if is_ny else "Confirm Password", type="password")
+                        btn_o_reg = st.form_submit_button("Lembetsani Akaunti ya Mlangizi →" if is_ny else "Register Officer Account →", use_container_width=True)
 
                     if btn_o_reg:
                         if not o_reg_name or not o_reg_email or not o_reg_pw1:
-                            st.warning("All fields are mandatory.")
+                            st.warning("Magawo onse ndi ofunika." if is_ny else "All fields are mandatory.")
                         elif o_reg_pin != OFFICER_SERVICE_KEY:
-                            st.error("❌ Invalid Authorisation Token. Registration is strictly restricted to accredited Ministry personnel.")
+                            st.error("❌ Chidindo chosayenera. Kulembetsa nkoletsedwa kwa amene alibe chilolezo." if is_ny else "❌ Invalid Authorisation Token. Registration is strictly restricted to accredited Ministry personnel.")
                         elif o_reg_pw1 != o_reg_pw2:
-                            st.error("Passwords do not match.")
+                            st.error("Mawu achinsinsi sakufanana." if is_ny else "Passwords do not match.")
                         else:
                             if db_register(o_reg_name, o_reg_email, o_reg_pw1, role="Officer", district=o_reg_dist):
-                                st.success("Officer account provisioned! Please sign in.")
+                                st.success("Akaunti yakonzedwa bwino! Chonde lowani." if is_ny else "Officer account provisioned! Please sign in.")
                             else:
-                                st.error("Email already registered.")
+                                st.error("Imeloyi inalembetsedwa kale." if is_ny else "Email already registered.")
 
                 with o_tab_demo:
-                    st.info("Demonstrating for evaluators or officials:")
-                    if st.button("🌟 Launch Extension Officer Demo (1-Click)", use_container_width=True, type="primary"):
+                    st.info("Kuwonetsa mwachangu monga Mlangizi:" if is_ny else "Demonstrating for evaluators or officials:")
+                    btn_demo_o = "🌟 Yambani Demo ya Mlangizi (1-Click)" if is_ny else "🌟 Launch Extension Officer Demo (1-Click)"
+                    if st.button(btn_demo_o, use_container_width=True, type="primary"):
                         st.session_state.auth_user = {
                             "name": "Chimwemwe Phiri (AEDO)",
                             "role": "Officer",
@@ -990,7 +1006,8 @@ if st.session_state.auth_user is None:
                         st.rerun()
 
                 st.markdown("<hr style='margin:14px 0;'>", unsafe_allow_html=True)
-                if st.button("← Return to Farmer Portal", key="btn_return_farmer_bottom", use_container_width=True):
+                btn_return_f = "← Bwererani ku Chikwanja cha Alimi" if is_ny else "← Return to Farmer Portal"
+                if st.button(btn_return_f, key="btn_return_farmer_bottom", use_container_width=True):
                     st.session_state.active_portal = "Farmer"
                     st.rerun()
 
@@ -1005,11 +1022,20 @@ if st.session_state.auth_user is None:
 
 
 # ---------------------------------------------------------------------------
-# 9. AUTHENTICATED WORKSPACES
+# 9. AUTHENTICATED WORKSPACES (WITH BACK NAVIGATION & CHICHEWA SUPPORT)
 # ---------------------------------------------------------------------------
 else:
 
     current_user = st.session_state.auth_user
+
+    # UNIVERSAL TOP NAVIGATION WITH BACK BUTTON
+    nav_col1, nav_col2 = st.columns([1.5, 4], vertical_alignment="center")
+    with nav_col1:
+        back_btn_text = "← Bwererani M'mbuyo (Home)" if is_ny else "← Back to Portal Home"
+        if st.button(back_btn_text, key="btn_universal_back_top"):
+            st.session_state.auth_user = None
+            st.session_state.active_scan = None
+            st.rerun()
 
     # =======================================================================
     # WORKSPACE A: EXTENSION OFFICER SURVEILLANCE SUITE
@@ -1020,61 +1046,61 @@ else:
             st.markdown(
                 f"""
                 <div style="background:#EBF7EE; border-radius:12px; padding:14px; border:1px solid #CDE8D4; margin-bottom:14px;">
-                    <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">MINISTRY CLEARANCE</div>
+                    <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">{'CHILOLEZO CHA UNDUNA' if is_ny else 'MINISTRY CLEARANCE'}</div>
                     <div style="font-size:16px; font-weight:800; color:#0C2618; margin-top:2px;">{current_user['name']}</div>
-                    <div style="font-size:12px; color:#516D5D;">📍 Station: {current_user['district']}</div>
+                    <div style="font-size:12px; color:#516D5D;">📍 {'Malo:' if is_ny else 'Station:'} {current_user['district']}</div>
                     <div style="display:inline-block; margin-top:6px; font-size:11px; font-weight:700; background:#007A3D; color:white; padding:2px 8px; border-radius:4px;">
-                        EXTENSION OFFICER (AEDO)
+                        {'MLANGIZI WA ZAULIMI (AEDO)' if is_ny else 'EXTENSION OFFICER (AEDO)'}
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            st.markdown("#### 📂 Officer Modules")
-            st.write("🔍 **Surveillance:** District Outbreak Spotter")
-            st.write("🗺️ **Mapping:** Geospatial GPS Telemetry")
-            st.write("📢 **Alerts:** Direct SMS Broadcaster")
+            st.markdown(f"#### {'📂 Magawo a Ntchito' if is_ny else '📂 Officer Modules'}")
+            st.write(f"🔍 **{'Kuwunika:' if is_ny else 'Surveillance:'}** {'Kuwona Matenda m\'Boma' if is_ny else 'District Outbreak Spotter'}")
+            st.write(f"🗺️ **{'Mapu:' if is_ny else 'Mapping:'}** {'Kutsata GPS ya Matenda' if is_ny else 'Geospatial GPS Telemetry'}")
+            st.write(f"📢 **{'Machenjezo:' if is_ny else 'Alerts:'}** {'Kutumiza SMS kwa Alimi' if is_ny else 'Direct SMS Broadcaster'}")
             st.markdown("---")
-            st.write("📞 **National Helpline:** 7111 (Toll-Free)")
+            st.write(f"📞 **{'Nambala Yaulere:' if is_ny else 'National Helpline:'}** 7111")
 
-            if st.button("🚪 Sign Out & Exit Desk", use_container_width=True):
+            btn_signout_o = "🚪 Tulukani (Sign Out)" if is_ny else "🚪 Sign Out & Exit Desk"
+            if st.button(btn_signout_o, use_container_width=True):
                 st.session_state.auth_user = None
                 st.session_state.active_portal = "Farmer"
                 st.rerun()
+
+        banner_title_o = "Kuwunika Kufalikira kwa Matenda ndi Machenjezo m'Boma" if is_ny else "District Epidemiological Surveillance & Early Warning"
+        banner_sub_o = "Kuwona zotsatira za zithunzi zoyezedwa m'madera a EPA. Tetezani zokolola pobzala machenjezo amsanga." if is_ny else "Real-time field scan telemetry across Malawi Extension Planning Areas (EPAs). Track pathogen escalation, inspect geospatial infection clusters, and issue direct farmer broadcast advisories."
 
         st.markdown(
             f"""
             <div class="exec-banner">
                 <div style="font-size:11.5px; font-weight:800; letter-spacing:1.5px; color:#A7F3D0;">
-                    MINISTRY OF AGRICULTURE · EXTENSION SURVEILLANCE DESK
+                    {'UNDUNA WA ZAULIMI · DESK YA ALANGIZI' if is_ny else 'MINISTRY OF AGRICULTURE · EXTENSION SURVEILLANCE DESK'}
                 </div>
                 <h1 style="color:white; margin:6px 0 10px 0; font-size:32px;">
-                    District Epidemiological Surveillance & Early Warning
+                    {banner_title_o}
                 </h1>
                 <p style="color:#D1FAE5; margin:0; font-size:14px; max-width:850px;">
-                    Real-time field scan telemetry across Malawi Extension Planning Areas (EPAs).
-                    Track pathogen escalation, inspect geospatial infection clusters, and issue direct farmer broadcast advisories.
+                    {banner_sub_o}
                 </p>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        t_spotter, t_map, t_broadcast = st.tabs([
-            "🔍 District Pathogen Spotter",
-            "🗺️ Geospatial Outbreak Clusters",
-            "📢 Farmer Advisory Broadcast"
-        ])
+        tabs_o_labels = ["🔍 Kuwona Matenda m'Boma", "🗺️ Mapu a Matenda m'Malawi", "📢 Tumizani Machenjezo a SMS"] if is_ny else ["🔍 District Pathogen Spotter", "🗺️ Geospatial Outbreak Clusters", "📢 Farmer Advisory Broadcast"]
+        t_spotter, t_map, t_broadcast = st.tabs(tabs_o_labels)
 
         df_telemetry = db_fetch_surveillance()
 
         with t_spotter:
-            st.subheader("At-a-Glance District Disease Spotter")
-            st.write("Select an administrative district to inspect active infections, risk thresholds, and field logs:")
+            st.subheader("Kuwona Matenda m'Boma Mwachangu" if is_ny else "At-a-Glance District Disease Spotter")
+            st.write("Sankhani boma kuti muwone matenda omwe achuluka komanso uphungu wa mankhwala:" if is_ny else "Select an administrative district to inspect active infections, risk thresholds, and field logs:")
 
             target_district = st.selectbox(
-                "Filter Extension Planning Area (EPA)",
+                "Sankhani Dera / Boma (EPA)" if is_ny else "Filter Extension Planning Area (EPA)",
                 list(MALAWI_DISTRICTS.keys()),
                 index=list(MALAWI_DISTRICTS.keys()).index(current_user["district"]) if current_user["district"] in MALAWI_DISTRICTS else 6
             )
@@ -1085,19 +1111,19 @@ else:
             top_pathogen = counts.index[0] if not counts.empty else "No Data"
 
             m1, m2, m3 = st.columns(3)
-            m1.metric("Total Scans Recorded", f"{total_district_scans} reports")
-            disp_top = DISPLAY_NAMES_EN.get(top_pathogen, top_pathogen)
-            m2.metric("Dominant Pathogen", disp_top)
+            m1.metric("Chiwerengero cha Zoyezedwa" if is_ny else "Total Scans Recorded", f"{total_district_scans}")
+            disp_top = (DISPLAY_NAMES_NY.get(top_pathogen, top_pathogen) if is_ny else DISPLAY_NAMES_EN.get(top_pathogen, top_pathogen))
+            m2.metric("Matenda Omwe Achuluka" if is_ny else "Dominant Pathogen", disp_top)
 
             if top_pathogen in ["maize_northern_leaf_blight", "maize_common_rust"] and total_district_scans >= 2:
-                alert_badge = '<span class="badge-status badge-crit">🔴 CRITICAL OUTBREAK ALERT</span>'
+                alert_badge = '<span class="badge-status badge-crit">🔴 CHENJEZO LA MATENDA OOPSA</span>' if is_ny else '<span class="badge-status badge-crit">🔴 CRITICAL OUTBREAK ALERT</span>'
             elif top_pathogen != "maize_healthy" and total_district_scans >= 1:
-                alert_badge = '<span class="badge-status badge-warn">🟡 MODERATE TRANSMISSION</span>'
+                alert_badge = '<span class="badge-status badge-warn">🟡 MATENDA APATAPATA</span>' if is_ny else '<span class="badge-status badge-warn">🟡 MODERATE TRANSMISSION</span>'
             else:
-                alert_badge = '<span class="badge-status badge-safe">🟢 STABLE / PATHOGEN NEGATIVE</span>'
+                alert_badge = '<span class="badge-status badge-safe">🟢 ZILI BWINO / PALIBE MATENDA</span>' if is_ny else '<span class="badge-status badge-safe">🟢 STABLE / PATHOGEN NEGATIVE</span>'
 
             with m3:
-                st.write("**District Escalation Level**")
+                st.write(f"**{'Mlingo wa Chenjezo m\'Boma' if is_ny else 'District Escalation Level'}**")
                 st.markdown(alert_badge, unsafe_allow_html=True)
 
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
@@ -1105,66 +1131,50 @@ else:
 
             with col_chart:
                 with st.container(border=True):
-                    st.markdown(f"#### Pathogen Distribution: **{target_district}**")
+                    st.markdown(f"#### {'Magawidwe a Matenda m\'Boma la:' if is_ny else 'Pathogen Distribution:'} **{target_district}**")
                     if not df_dist.empty:
                         plot_df = df_dist.copy()
-                        plot_df["Pathogen"] = plot_df["disease_code"].map(DISPLAY_NAMES_EN)
+                        plot_df["Pathogen"] = plot_df["disease_code"].map(DISPLAY_NAMES_NY if is_ny else DISPLAY_NAMES_EN)
                         st.bar_chart(plot_df["Pathogen"].value_counts())
                     else:
-                        st.info("No scans recorded for this district yet. Data streams in real-time as farmers upload photos.")
+                        st.info("Palibe zoyezedwa zomwe zalembedwa m'bomali panopa." if is_ny else "No scans recorded for this district yet. Data streams in real-time as farmers upload photos.")
 
             with col_proto:
                 with st.container(border=True):
-                    st.markdown("#### Prescribed Extension Action")
+                    st.markdown("#### Uphungu Oyenera Kupereka kwa Alimi" if is_ny else "#### Prescribed Extension Action")
                     if top_pathogen in AGRO_PROTOCOLS and top_pathogen != "non_maize_leaf":
                         proto = AGRO_PROTOCOLS[top_pathogen]
-                        st.write(f"**Identified:** {proto['en_title']}")
-                        st.write(f"**Chemical Class:** `{proto['prescriptions']}`")
-                        st.markdown("**Officer Field Protocol:**")
-                        for act in proto["actions_en"]:
+                        st.write(f"**{'Matenda:' if is_ny else 'Identified:'}** {proto['ny_title'] if is_ny else proto['en_title']}")
+                        st.write(f"**{'Mankhwala:' if is_ny else 'Chemical Class:'}** `{proto['prescriptions_ny'] if is_ny else proto['prescriptions_en']}`")
+                        st.markdown(f"**{'Zochita za Alangizi:' if is_ny else 'Officer Field Protocol:'}**")
+                        for act in (proto["actions_ny"] if is_ny else proto["actions_en"]):
                             st.markdown(f"- {act}")
                     else:
-                        st.write("No severe pathogen detected. Instruct farmers to maintain standard top-dressing schedule.")
-
-            with st.expander("📋 View Raw Epidemiological Field Audit Records"):
-                st.dataframe(
-                    df_dist[["report_id", "user_name", "disease_code", "confidence", "created_at"]].rename(
-                        columns={
-                            "report_id": "Audit Reference",
-                            "user_name": "Farmer",
-                            "disease_code": "Pathology",
-                            "confidence": "Confidence (%)",
-                            "created_at": "Timestamp"
-                        }
-                    ),
-                    use_container_width=True
-                )
+                        st.write("Palibe matenda oopsa omwe aoneka. Limbikitsani alimi kuika feteleza ndi kupalira pa nthawi." if is_ny else "No severe pathogen detected. Instruct farmers to maintain standard top-dressing schedule.")
 
         with t_map:
-            st.subheader("National Geospatial Outbreak Cluster Map")
-            st.write("Live GPS telemetry coordinates of confirmed maize foliar infections across Malawi:")
+            st.subheader("Mapu a Dziko Lonse Oonetsa Madera Omwe Matenda Apezeka" if is_ny else "National Geospatial Outbreak Cluster Map")
+            st.write("GPS yotsata pomwe alimi ayezetsa mbeu za chimanga m'Malawi:" if is_ny else "Live GPS telemetry coordinates of confirmed maize foliar infections across Malawi:")
             geo_df = df_telemetry.dropna(subset=["latitude", "longitude"]).copy()
             if not geo_df.empty:
                 st.map(geo_df, latitude="latitude", longitude="longitude", size=25, zoom=6)
-                st.caption(f"Visualizing {len(geo_df)} verified foliar scan locations across Northern, Central, and Southern Malawi.")
+                st.caption(f"Kuonetsa malo {len(geo_df)} omwe ayezedwa m'chigawo cha Kumpoto, Pakati, ndi Kumwera." if is_ny else f"Visualizing {len(geo_df)} verified foliar scan locations across Northern, Central, and Southern Malawi.")
             else:
-                st.info("No geospatial coordinates logged.")
+                st.info("Palibe malo a GPS omwe alembedwa." if is_ny else "No geospatial coordinates logged.")
 
         with t_broadcast:
-            st.subheader("Direct Farmer Advisory Broadcaster")
-            st.write("Dispatch urgent agro-chemical or weather warnings to all registered farmers in a targeted district:")
+            st.subheader("Kutumiza Uthenga wa Chenjezo (SMS Broadcast)" if is_ny else "Direct Farmer Advisory Broadcaster")
+            st.write("Tumizani uthenga wamsanga wa mankhwala kwa alimi onse m'boma lomwe lili pachiwopsezo:" if is_ny else "Dispatch urgent agro-chemical or weather warnings to all registered farmers in a targeted district:")
 
             with st.form("form_broadcast"):
-                b_dist = st.selectbox("Target Administrative District", list(MALAWI_DISTRICTS.keys()))
-                b_urg = st.selectbox("Priority Flag", ["Standard Agricultural Advisory", "⚠️ Urgent Outbreak Warning"])
-                b_text = st.text_area(
-                    "Advisory SMS Copy (Max 160 characters)",
-                    value=f"CHENJEZO LA ULIMI ({b_dist}): Matenda a Chikwangwani aoneka m'munda mwa alimi ena. Thirirani Folicur kapena funsani a AEDO pa 7111."
-                )
-                b_submit = st.form_submit_button("Broadcast SMS to Farmers →", type="primary", use_container_width=True)
+                b_dist = st.selectbox("Sankhani Boma Lomwe Mukufuna Kutumizako" if is_ny else "Target Administrative District", list(MALAWI_DISTRICTS.keys()))
+                b_urg = st.selectbox("Kufunika kwa Uthenga" if is_ny else "Priority Flag", ["Uthenga Wamba wa Zaulimi", "⚠️ Chenjezo la Matenda Oopsa"] if is_ny else ["Standard Agricultural Advisory", "⚠️ Urgent Outbreak Warning"])
+                default_sms = f"CHENJEZO LA ULIMI ({b_dist}): Matenda a Chikwangwani aoneka m'munda mwa alimi ena. Thirirani Folicur kapena funsani a AEDO pa 7111."
+                b_text = st.text_area("Mawu a SMS (Zilembo zosachepera 160)" if is_ny else "Advisory SMS Copy (Max 160 characters)", value=default_sms)
+                b_submit = st.form_submit_button("Tumizani SMS kwa Alimi →" if is_ny else "Broadcast SMS to Farmers →", type="primary", use_container_width=True)
 
             if b_submit:
-                st.success(f"✅ Advisory successfully queued for broadcast to all registered smallholders in {b_dist} via the TNM/Airtel gateway!")
+                st.success(f"✅ Uthenga watumizidwa bwino kwa alimi onse olembetsedwa m'boma la {b_dist} kudzera pa TNM/Airtel!" if is_ny else f"✅ Advisory successfully queued for broadcast to all registered smallholders in {b_dist} via the TNM/Airtel gateway!")
 
     # =======================================================================
     # WORKSPACE B: SMALLHOLDER FARMER SUITE (PURE FARMER EXPERIENCE)
@@ -1175,27 +1185,28 @@ else:
             st.markdown(
                 f"""
                 <div style="background:#EBF7EE; border-radius:12px; padding:14px; border:1px solid #CDE8D4; margin-bottom:14px;">
-                    <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">FARMER WORKSPACE</div>
+                    <div style="font-size:11px; font-weight:800; color:#007A3D; letter-spacing:0.5px;">{'CHIKWANJA CHA MLIMI' if is_ny else 'FARMER WORKSPACE'}</div>
                     <div style="font-size:16px; font-weight:800; color:#0C2618; margin-top:2px;">{current_user['name']}</div>
-                    <div style="font-size:12px; color:#516D5D;">📍 {current_user['district']}</div>
+                    <div style="font-size:12px; color:#516D5D;">📍 {'Boma:' if is_ny else 'District:'} {current_user['district']}</div>
                     <div style="display:inline-block; margin-top:6px; font-size:11px; font-weight:700; background:#007A3D; color:white; padding:2px 8px; border-radius:4px;">
-                        REGISTERED SMALLHOLDER
+                        {'MLIMI WOLEMBETSEDWA' if is_ny else 'REGISTERED SMALLHOLDER'}
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            st.markdown("#### 🌽 Farmer Tools")
-            st.write("📸 **Diagnostic:** AI Maize Leaf Scanner")
-            st.write("🌦️ **Weather:** Real-time District Satellite")
-            st.write("⚖️ **Calculator:** AIP NPK & Urea Inputs")
-            st.write("📱 **Offline:** *384*265# USSD Simulator")
+            st.markdown(f"#### {'🌽 Zida za Mlimi' if is_ny else '🌽 Farmer Tools'}")
+            st.write(f"📸 **{'Kuyezetsa:' if is_ny else 'Diagnostic:'}** {'Kupenda Tsamba la Chimanga' if is_ny else 'AI Maize Leaf Scanner'}")
+            st.write(f"🌦️ **{'Nyengo:' if is_ny else 'Weather:'}** {'Zanyengo m\'Boma Lanu' if is_ny else 'Real-time District Satellite'}")
+            st.write(f"⚖️ **{'Mwerero:' if is_ny else 'Calculator:'}** {'Feteleza wa AIP & Mbeu' if is_ny else 'AIP NPK & Urea Inputs'}")
+            st.write(f"📱 **{'Popanda Neti:' if is_ny else 'Offline:'}** {'Nambala ya Foni *384*265#' if is_ny else '*384*265# USSD Simulator'}")
             st.markdown("---")
-            st.write("📞 **Toll-Free Helpline:** 7111")
-            st.write("🌾 **Farm Radio Trust:** Radio Advisory")
+            st.write(f"📞 **{'Nambala Yaulere:' if is_ny else 'Toll-Free Helpline:'}** 7111")
+            st.write(f"🌾 **{'Wailesi ya Ulimi:' if is_ny else 'Farm Radio Trust:'}** Radio Advisory")
 
-            if st.button("🚪 Sign Out (Farmer)", use_container_width=True):
+            btn_signout_f = "🚪 Tulukani m'Dongosolo (Sign Out)" if is_ny else "🚪 Sign Out (Farmer)"
+            if st.button(btn_signout_f, use_container_width=True):
                 st.session_state.auth_user = None
                 st.session_state.active_scan = None
                 st.session_state.active_portal = "Farmer"
@@ -1207,71 +1218,65 @@ else:
         dist_diseases = dist_reports[dist_reports["disease_code"] != "maize_healthy"]["disease_code"].value_counts()
 
         if not dist_diseases.empty:
-            hot_disease = DISPLAY_NAMES_EN.get(dist_diseases.index[0], dist_diseases.index[0])
+            raw_top_d = dist_diseases.index[0]
+            hot_disease = (DISPLAY_NAMES_NY.get(raw_top_d, raw_top_d) if is_ny else DISPLAY_NAMES_EN.get(raw_top_d, raw_top_d))
+            notice_header = f"⚠️ Chenjezo la Matenda m'Dera Lanu ({current_user['district']}):" if is_ny else f"⚠️ Community Outbreak Notice ({current_user['district']}):"
+            notice_body = f"Alangizi a zaulimi anena kuti matenda a <strong>{hot_disease}</strong> apezeka m'dera lino. Yezani masamba a chimanga m'mundamo kuti muteteze mbeu zanu." if is_ny else f"Extension officers report active cases of <strong>{hot_disease}</strong> in your area. Scan your maize leaves below to catch infections early."
             st.markdown(
                 f"""
                 <div style="background:#FFF7ED; border-left:5px solid #EA580C; padding:12px 18px; border-radius:10px; margin-bottom:18px;">
-                    <strong style="color:#9A3412;">⚠️ Community Outbreak Notice ({current_user['district']}):</strong><br>
-                    <span style="color:#7C2D12; font-size:13.5px;">
-                        Extension officers report active cases of <strong>{hot_disease}</strong> in your area.
-                        Scan your maize leaves below to catch infections early.
-                    </span>
+                    <strong style="color:#9A3412;">{notice_header}</strong><br>
+                    <span style="color:#7C2D12; font-size:13.5px;">{notice_body}</span>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
+        f_header = "Malo Othandizira Ulimi Wamtsogolo" if is_ny else "Farming Intelligence Hub"
+        f_sub = "Yezani matenda a chimanga ndi AI, onani momwe nyengo ilili lero m'boma lanu, kapena werengerani feteleza." if is_ny else "Execute AI disease diagnosis, check district satellite weather telemetry, or calculate your fertilizer requirements."
         st.markdown(
-            """
+            f"""
             <div style="color:#A4DEB4; font-size:11px; font-weight:800; letter-spacing:2px;">
-                AGRIWISE FARMING SUITE
+                {'CHIKWANJA CHA MLIMI WANZERU' if is_ny else 'AGRIWISE FARMING SUITE'}
             </div>
-            <h1 style="color:white; font-size:36px; margin:0 0 10px 0;">Farming Intelligence Hub</h1>
-            <p style="color:#dcebe0; font-size:15px; margin-bottom:20px;">
-                Execute AI disease diagnosis, check district satellite weather telemetry, or calculate your fertilizer requirements.
-            </p>
+            <h1 style="color:white; font-size:36px; margin:0 0 10px 0;">{f_header}</h1>
+            <p style="color:#dcebe0; font-size:15px; margin-bottom:20px;">{f_sub}</p>
             """,
             unsafe_allow_html=True
         )
 
-        t_diag, t_weather, t_aip, t_ussd = st.tabs([
-            "📷 AI Crop Diagnosis",
-            "🌦️ Climate & Weather",
-            "⚖️ AIP Fertilizer Calculator",
-            "📱 USSD / SMS Simulator (*384#)"
-        ])
+        tab_farmer_labels = ["📷 Kuyezetsa Matenda (Diagnosis)", "🌦️ Nyengo & Zanyengo (Weather)", "⚖️ Mwerero wa Feteleza (AIP)", "📱 Pulogalamu ya Foni (*384#)"] if is_ny else ["📷 AI Crop Diagnosis", "🌦️ Climate & Weather", "⚖️ AIP Fertilizer Calculator", "📱 USSD / SMS Simulator (*384#)"]
+        t_diag, t_weather, t_aip, t_ussd = st.tabs(tab_farmer_labels)
 
         with t_diag:
             c_input, c_tips = st.columns([1.3, 0.85], gap="large")
 
             with c_input:
                 with st.container(border=True):
-                    st.subheader("Maize Leaf Diagnostic")
-                    st.write("Take a picture in the field or upload a maize leaf photo:")
+                    st.subheader("Kuyezetsa Tsamba la Chimanga" if is_ny else "Maize Leaf Diagnostic")
+                    st.write("Jambulani tsamba m'munda kapena ikani chithunzi cha tsamba la chimanga:" if is_ny else "Take a picture in the field or upload a maize leaf photo:")
 
-                    input_source = st.radio(
-                        "Input Mechanism",
-                        ["📸 Device Camera", "📁 File Upload (JPG/PNG)"],
-                        horizontal=True
-                    )
+                    input_choices = ["📸 Kamera ya Foni", "📁 Ikani Chithunzi (JPG/PNG)"] if is_ny else ["📸 Device Camera", "📁 File Upload (JPG/PNG)"]
+                    input_source = st.radio("Njira Yomwe Mukufuna Kujambulira" if is_ny else "Input Mechanism", input_choices, horizontal=True)
 
                     leaf_img = None
-                    if "Camera" in input_source:
-                        cam_data = st.camera_input("Snap maize leaf photo")
+                    if "Camera" in input_source or "Kamera" in input_source:
+                        cam_data = st.camera_input("Jambulani tsamba la chimanga" if is_ny else "Snap maize leaf photo")
                         if cam_data:
                             leaf_img = Image.open(cam_data).convert("RGB")
                     else:
-                        up_data = st.file_uploader("Upload leaf image", type=["jpg", "jpeg", "png"])
+                        up_data = st.file_uploader("Ikani chithunzi cha tsamba" if is_ny else "Upload leaf image", type=["jpg", "jpeg", "png"])
                         if up_data:
                             leaf_img = Image.open(up_data).convert("RGB")
 
                     if leaf_img is not None:
-                        st.image(leaf_img, caption="Loaded Leaf Sample", use_container_width=True)
+                        st.image(leaf_img, caption="Chithunzi Chomwe Mwaika" if is_ny else "Loaded Leaf Sample", use_container_width=True)
 
-                        btn_inspect = st.button("🔍 Run Disease Diagnosis", type="primary", use_container_width=True)
+                        inspect_btn_text = "🔍 Yezani Matenda a Mbeu" if is_ny else "🔍 Run Disease Diagnosis"
+                        btn_inspect = st.button(inspect_btn_text, type="primary", use_container_width=True)
 
                         if btn_inspect:
-                            with st.spinner("Analyzing foliar cellular pigments & classifying pathology..."):
+                            with st.spinner("Tikupenda tsamba la chimanga pogwiritsa ntchito AI..." if is_ny else "Analyzing foliar cellular pigments & classifying pathology..."):
                                 time.sleep(0.5)
                                 p_class, p_conf, p_eng = execute_ai_diagnostic(leaf_img)
                                 st.session_state.active_scan = {
@@ -1299,46 +1304,45 @@ else:
                         if scan:
                             st.divider()
 
-                            if st.button("← Back / Scan Another Leaf", key="btn_clear_scan"):
+                            # UNIVERSAL BACK / SCAN ANOTHER LEAF BUTTON
+                            btn_back_scan = "← Bwererani / Yezaninso Tsamba Lina" if is_ny else "← Back / Scan Another Leaf"
+                            if st.button(btn_back_scan, key="btn_clear_scan"):
                                 st.session_state.active_scan = None
                                 st.rerun()
 
                             c_key = scan["class"]
                             c_conf = scan["conf"]
-                            is_ny = (st.session_state.lang == "Chichewa")
-
                             name_disp = DISPLAY_NAMES_NY[c_key] if is_ny else DISPLAY_NAMES_EN[c_key]
                             proto = AGRO_PROTOCOLS[c_key]
 
                             if c_key == "non_maize_leaf":
                                 st.error(f"❌ {name_disp}")
                                 st.warning(
-                                    "🚫 **Botanical Screening Rejection:** The uploaded image does not contain identifiable maize foliage. "
-                                    "This AI system exclusively inspects Maize (Chimanga) leaves."
+                                    "🚫 **Kuchenjeza:** Chithunzi chomwe mwaikachi sichikuonetsa tsamba la chimanga. Makinawa amapenda masamba a chimanga okha." if is_ny else
+                                    "🚫 **Botanical Screening Rejection:** The uploaded image does not contain identifiable maize foliage. This AI system exclusively inspects Maize (Chimanga) leaves."
                                 )
-                                st.caption(f"Inspection Reason: {scan['engine']}")
+                                st.caption(f"{'Chifukwa:' if is_ny else 'Inspection Reason:'} {scan['engine']}")
 
                                 st.markdown(
-                                    """
+                                    f"""
                                     <div style="background:#FFF0F0; border:1.5px solid #FFCDD2; border-radius:12px; padding:16px; margin:12px 0;">
                                         <div style="color:#C62828; font-weight:800; font-size:16px; margin-bottom:6px;">
-                                            Recommendation: Not Applicable (N/A)
+                                            {'Uphungu: Siyikugwira Ntchito (N/A)' if is_ny else 'Recommendation: Not Applicable (N/A)'}
                                         </div>
                                         <div style="color:#5D4037; font-size:13px; line-height:1.6;">
-                                            No chemical, agronomic, or fertilizer prescriptions can be provided for non-maize subjects.
-                                            Please photograph an actual maize leaf in natural daylight.
+                                            {'Palibe mankhwala kapena uphungu umene ungaperekedwe pa chinthu chomwe sichachimanga. Chonde jambulaninso tsamba lenileni la chimanga pamalo okhala ndi kuwala.' if is_ny else 'No chemical, agronomic, or fertilizer prescriptions can be provided for non-maize subjects. Please photograph an actual maize leaf in natural daylight.'}
                                         </div>
                                     </div>
                                     """,
                                     unsafe_allow_html=True
                                 )
 
-                                st.markdown("#### 📋 Action Guidance:")
+                                st.markdown(f"#### {'📋 Zochita Zoyenera:' if is_ny else '📋 Action Guidance:'}")
                                 acts = proto["actions_ny"] if is_ny else proto["actions_en"]
                                 for a in acts:
                                     st.markdown(f"- {a}")
 
-                                st.info(f"**Prescription Status:** {proto['prescriptions']}")
+                                st.info(f"**{'Uphungu wa Mankhwala:' if is_ny else 'Prescription Status:'}** {proto['prescriptions_ny'] if is_ny else proto['prescriptions_en']}")
 
                             else:
                                 if c_key == "maize_healthy":
@@ -1347,9 +1351,9 @@ else:
                                     st.warning(f"⚠️ {name_disp}")
 
                                 st.progress(min(max(c_conf / 100.0, 0.0), 1.0))
-                                st.caption(f"Confidence: {c_conf:.1f}% · Engine: {scan['engine']} · Inspection ID: {scan.get('report_id')}")
+                                st.caption(f"{'Mlingo Wotsimikizika:' if is_ny else 'Confidence:'} {c_conf:.1f}% · {'Makinawa:' if is_ny else 'Engine:'} {scan['engine']} · {'Nambala Yoyezera:' if is_ny else 'Inspection ID:'} {scan.get('report_id')}")
 
-                                st.markdown("#### 📋 Recommended Action Plan:")
+                                st.markdown(f"#### {'📋 Uphungu wa Zaulimi:' if is_ny else '📋 Recommended Action Plan:'}")
                                 acts = proto["actions_ny"] if is_ny else proto["actions_en"]
                                 for a in acts:
                                     st.markdown(f"- {a}")
@@ -1357,8 +1361,8 @@ else:
                                 st.markdown(
                                     f"""
                                     <div style="background:#F2F9F4; border-left:4px solid #007A3D; padding:12px; border-radius:8px; margin-top:12px;">
-                                        <strong style="color:#00562A;">Verified Agrochemical Prescription:</strong><br>
-                                        <span style="color:#1C3B29; font-size:13.5px;">{proto['prescriptions']}</span>
+                                        <strong style="color:#00562A;">{'Mankhwala Ovomerezeka:' if is_ny else 'Verified Agrochemical Prescription:'}</strong><br>
+                                        <span style="color:#1C3B29; font-size:13.5px;">{proto['prescriptions_ny'] if is_ny else proto['prescriptions_en']}</span>
                                     </div>
                                     """,
                                     unsafe_allow_html=True
@@ -1376,8 +1380,9 @@ Ministry Toll-Free Helpline: 7111
 OFFICIAL PRESCRIPTION & INTERVENTION:
 """ + "\n".join([f"- {a}" for a in acts])
 
+                                dl_label = "📥 Tsitsani Satifiketi Yoyezera Munda (.txt)" if is_ny else "📥 Export Field Inspection Certificate (.txt)"
                                 st.download_button(
-                                    "📥 Export Field Inspection Certificate (.txt)",
+                                    dl_label,
                                     data=cert_str,
                                     file_name=f"AgriWise_Inspection_{datetime.date.today()}.txt",
                                     mime="text/plain",
@@ -1385,30 +1390,31 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
                                 )
 
             with c_tips:
+                t1_h = "Tsamba la Chimanga Lokha" if is_ny else "Maize Foliage Only"
+                t1_b = "Makinawa amapenda chimanga chokha. Pewani zithunzi za dothi kapena mbeu zina." if is_ny else "This AI is specifically calibrated for Maize (Chimanga). Avoid non-plant images or other crops."
+                t2_h = "Kuwala Kwachilengedwe" if is_ny else "Natural Field Daylight"
+                t2_b = "Jambulani masamba masana pomwe pali kuwala kokwanira. Pewani mithunzi." if is_ny else "Photograph leaves in daylight. Avoid heavy shadows or backlighting."
+                t3_h = "Ikani Mabala Pakati" if is_ny else "Center Disease Spots"
+                t3_b = "Onetsetsani kuti mabala a matenda aoneka bwinobwino mkati mwa chithunzichi." if is_ny else "Ensure lesions or pustules fill at least 30% of the camera frame."
+
                 st.markdown(
-                    """
+                    f"""
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">🌿</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:15px;">Maize Foliage Only</div>
-                        <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                            This AI is specifically calibrated for Maize (Chimanga). Avoid non-plant images or other crops.
-                        </div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:15px;">{t1_h}</div>
+                        <div style="color:#576C60; font-size:13px; line-height:1.5;">{t1_b}</div>
                     </div>
                     <div style="height:10px"></div>
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">☀️</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:15px;">Natural Field Daylight</div>
-                        <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                            Photograph leaves in daylight. Avoid heavy shadows or backlighting.
-                        </div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:15px;">{t2_h}</div>
+                        <div style="color:#576C60; font-size:13px; line-height:1.5;">{t2_b}</div>
                     </div>
                     <div style="height:10px"></div>
                     <div class="feature-tile">
                         <div style="font-size:24px; margin-bottom:6px;">🍃</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:15px;">Center Disease Spots</div>
-                        <div style="color:#576C60; font-size:13px; line-height:1.5;">
-                            Ensure lesions or pustules fill at least 30% of the camera frame.
-                        </div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:15px;">{t3_h}</div>
+                        <div style="color:#576C60; font-size:13px; line-height:1.5;">{t3_b}</div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -1416,58 +1422,59 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
 
         with t_weather:
             if os.path.exists(WEATHER_VIDEO):
-                with st.expander("🎥 Ambient Agro-Weather Stream (weather_bg.mp4)", expanded=False):
+                with st.expander("🎥 Kanema wa Zanyengo (weather_bg.mp4)" if is_ny else "🎥 Ambient Agro-Weather Stream (weather_bg.mp4)", expanded=False):
                     st.video(WEATHER_VIDEO)
 
+            w_h = "Uthenga wa Zanyengo m'Maboma a Malawi" if is_ny else "District Agro-Meteorology"
+            w_sub = "Kutsata nyengo ndi satellite m'maboma onse a Malawi ndi uphungu wa kuthira mankhwala." if is_ny else "Real-time weather tracking across all 3 regions of Malawi with fungicide spraying advisories."
             st.markdown(
-                """
+                f"""
                 <div style="background:linear-gradient(120deg, #174b2d, #287b49); padding:20px; border-radius:16px; margin-bottom:15px;">
-                    <h3 style="color:white; margin:0 0 5px 0;">District Agro-Meteorology</h3>
-                    <p style="color:#dcebe0; margin:0; font-size:14px;">
-                        Real-time weather tracking across all 3 regions of Malawi with fungicide spraying advisories.
-                    </p>
+                    <h3 style="color:white; margin:0 0 5px 0;">{w_h}</h3>
+                    <p style="color:#dcebe0; margin:0; font-size:14px;">{w_sub}</p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
             s_dist = st.selectbox(
-                "Select District / Extension Planning Area (EPA)",
+                "Sankhani Boma Lanu (EPA)" if is_ny else "Select District / Extension Planning Area (EPA)",
                 list(MALAWI_DISTRICTS.keys()),
                 index=list(MALAWI_DISTRICTS.keys()).index(current_user["district"]) if current_user["district"] in MALAWI_DISTRICTS else 6
             )
 
             d_info = MALAWI_DISTRICTS[s_dist]
-            with st.spinner(f"Connecting to satellite feed for {s_dist}..."):
+            with st.spinner(f"{'Tikulandira uthenga wa nyengo pa satellite...' if is_ny else 'Connecting to satellite feed for ' + s_dist + '...'}"):
                 w_info = fetch_agro_telemetry(d_info["lat"], d_info["lon"], s_dist)
 
             k1, k2, k3, k4 = st.columns(4)
-            k1.metric("🌡️ Temperature", f"{w_info['temp']:.1f} °C")
-            k2.metric("💧 Rel. Humidity", f"{w_info['humidity']:.0f}%")
-            k3.metric("🌧️ Precipitation", f"{w_info['rain']:.1f} mm")
-            k4.metric("💨 Wind Velocity", f"{w_info['wind']:.1f} km/h")
+            k1.metric("🌡️ Kutentha" if is_ny else "🌡️ Temperature", f"{w_info['temp']:.1f} °C")
+            k2.metric("💧 Chinyezi" if is_ny else "💧 Rel. Humidity", f"{w_info['humidity']:.0f}%")
+            k3.metric("🌧️ Mvula" if is_ny else "🌧️ Precipitation", f"{w_info['rain']:.1f} mm")
+            k4.metric("💨 Liwiro la Mphepo" if is_ny else "💨 Wind Velocity", f"{w_info['wind']:.1f} km/h")
 
-            st.caption(f"Source: {w_info['source']} · Agro-Ecological Zone: {d_info['zone']}")
+            st.caption(f"{'Gwero la Uthenga:' if is_ny else 'Source:'} {w_info['source']} · {'Chigawo:' if is_ny else 'Zone:'} {d_info['zone']}")
 
             if w_info["rain"] > 3.0:
-                st.error("🌧️ **Precipitation Warning:** High wash-off risk. Defer foliar sprays.")
+                st.error("🌧️ **Chenjezo la Mvula:** Mvula ikuyembekezeka. Musathire mankhwala kuti asasambike." if is_ny else "🌧️ **Precipitation Warning:** High wash-off risk. Defer foliar sprays.")
             elif w_info["wind"] > 16.0:
-                st.warning("💨 **Wind Drift Warning:** Elevated wind speed. Defer spraying until early morning calm.")
+                st.warning("💨 **Chenjezo la Mphepo:** Mphepo ndi yamphamvu. Thirirani mankhwala m'mawa kwambiri mphepo isanayambe." if is_ny else "💨 **Wind Drift Warning:** Elevated wind speed. Defer spraying until early morning calm.")
             else:
-                st.success("✅ **Optimal Spray Conditions:** Low wind drift and stable canopy moisture.")
+                st.success("✅ **Nyengo Ndi Yabwino:** Mphepo ndi yodekha, mutha kuthira mankhwala m'mundamo mosavuta." if is_ny else "✅ **Optimal Spray Conditions:** Low wind drift and stable canopy moisture.")
 
         with t_aip:
-            st.subheader("AIP Fertilizer & Input Calculator (Mwerero wa Feteleza)")
-            st.write("Calculate exact input quantities based on Malawi Ministry of Agriculture recommendations:")
+            st.subheader("Mwerero wa Feteleza ndi Mbeu wa AIP" if is_ny else "AIP Fertilizer & Input Calculator (Mwerero wa Feteleza)")
+            st.write("Werengerani mlingo weniweni wa feteleza ndi mbeu zoyenera munda mwanu:" if is_ny else "Calculate exact input quantities based on Malawi Ministry of Agriculture recommendations:")
 
             c1, c2 = st.columns([1, 1], gap="large")
 
             with c1:
                 with st.container(border=True):
-                    l_unit = st.radio("Measurement Unit", ["Acres", "Hectares"], horizontal=True)
-                    l_size = st.number_input(f"Land Size ({l_unit})", min_value=0.25, max_value=250.0, value=2.0, step=0.25)
+                    unit_options = ["Maekala (Acres)", "Mahekitala (Hectares)"] if is_ny else ["Acres", "Hectares"]
+                    l_unit = st.radio("Muyezo wa Munda" if is_ny else "Measurement Unit", unit_options, horizontal=True)
+                    l_size = st.number_input("Kukula kwa Munda" if is_ny else "Land Size", min_value=0.25, max_value=250.0, value=2.0, step=0.25)
                     s_type = st.selectbox(
-                        "Certified Maize Seed Type",
+                        "Mtundu wa Mbeu ya Chimanga" if is_ny else "Certified Maize Seed Type",
                         [
                             "SC 719 / SC 637 (High Yield Hybrid)",
                             "DKC 80-33 / DKC 90-89 (DeKalb)",
@@ -1477,39 +1484,44 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
                     )
 
             with c2:
-                acres = l_size if l_unit == "Acres" else l_size * 2.471
+                is_hec = ("Mahekitala" in l_unit) or (l_unit == "Hectares")
+                acres = l_size * 2.471 if is_hec else l_size
                 basal_bags = math.ceil(acres * 2.0)
                 urea_bags = math.ceil(acres * 2.0)
                 seed_kg = math.ceil(acres * 10.0)
 
                 with st.container(border=True):
-                    st.markdown("#### Input Allocation Package:")
+                    st.markdown("#### Feteleza ndi Mbeu Zofunika:" if is_ny else "#### Input Allocation Package:")
                     r1, r2 = st.columns(2)
-                    r1.metric("Basal (NPK 23:10:5)", f"{basal_bags} bags (50kg)")
-                    r2.metric("Top (Urea 46% N)", f"{urea_bags} bags (50kg)")
-                    st.metric("Certified Seed Requirement", f"{seed_kg} kg")
+                    r1.metric("Woyambira (NPK 23:10:5)" if is_ny else "Basal (NPK 23:10:5)", f"{basal_bags} matumba (50kg)" if is_ny else f"{basal_bags} bags (50kg)")
+                    r2.metric("Wowonjezera (Urea 46% N)" if is_ny else "Top (Urea 46% N)", f"{urea_bags} matumba (50kg)" if is_ny else f"{urea_bags} bags (50kg)")
+                    st.metric("Mbeu Yovomerezeka Yofunika" if is_ny else "Certified Seed Requirement", f"{seed_kg} kg")
 
-                    st.caption("Apply Basal dressing within 7 days of emergence; apply Urea at knee-height (21–28 days).")
+                    st.caption("Thirani feteleza wa NPK patadutsa masiku 7 mbeu zitamera; thirani Urea chimanga chitafika m'mawondo (masiku 21–28)." if is_ny else "Apply Basal dressing within 7 days of emergence; apply Urea at knee-height (21–28 days).")
 
         with t_ussd:
-            st.subheader("Offline USSD / SMS Mobile Portal (*384*265#)")
-            st.write("Demonstration for rural smallholders without smartphones or 4G data access:")
+            st.subheader("Msewu Wopanda Intaneti (USSD/SMS *384*265#)" if is_ny else "Offline USSD / SMS Mobile Portal (*384*265#)")
+            st.write("Kuthandiza alimi akumudzi omwe alibe mafoni amakono kapena intaneti:" if is_ny else "Demonstration for rural smallholders without smartphones or 4G data access:")
 
             sim1, sim2 = st.columns([1, 1], gap="large")
 
             with sim1:
-                st.text_input("USSD Service Shortcode", value="*384*265#", disabled=True)
-                q_opt = st.selectbox(
-                    "Simulate Smallholder Query",
-                    [
-                        "1. Check Maize Disease Remedies (Mankhwala)",
-                        "2. Today's Weather in My District",
-                        "3. Current ADMARC Maize Market Price",
-                        "4. Request Extension Worker Callback"
-                    ]
-                )
+                st.text_input("Nambala ya USSD" if is_ny else "USSD Service Shortcode", value="*384*265#", disabled=True)
+                queries_ussd = [
+                    "1. Funsani Mankhwala a Matenda a Chimanga",
+                    "2. Funsani za Nyengo m'Boma Lanu",
+                    "3. Mitengo ya Chimanga ku ADMARC",
+                    "4. Pemphani Kuti Mlangizi wa Zaulimi Akuyimbireni"
+                ] if is_ny else [
+                    "1. Check Maize Disease Remedies (Mankhwala)",
+                    "2. Today's Weather in My District",
+                    "3. Current ADMARC Maize Market Price",
+                    "4. Request Extension Worker Callback"
+                ]
+                q_opt = st.selectbox("Sankhani Zomwe Mukufuna Kufunsa" if is_ny else "Simulate Smallholder Query", queries_ussd)
 
-                if st.button("📞 Execute USSD Command", use_container_width=True):
+                btn_ussd_text = "📞 Imbani Nambala ya USSD" if is_ny else "📞 Execute USSD Command"
+                if st.button(btn_ussd_text, use_container_width=True):
                     if "1" in q_opt:
                         u_msg = (
                             "AGRIWISE MLIMI WANZERU\n"
@@ -1548,13 +1560,13 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
 
             with sim2:
                 st.markdown(
-                    """
+                    f"""
                     <div class="feature-tile">
-                        <div style="font-weight:800; color:#0A2C1A; font-size:15px; margin-bottom:6px;">National System Reach:</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:15px; margin-bottom:6px;">{'Kufikira Alimi Onse m\'Malawi:' if is_ny else 'National System Reach:'}</div>
                         <div style="color:#576C60; font-size:13px; line-height:1.6;">
-                            • <strong>Zero Data Barrier:</strong> Smallholders in rural villages without smartphones query the AI system via GSM.<br>
-                            • <strong>TNM & Airtel Ready:</strong> Interfaces with national mobile aggregator USSD menus.<br>
-                            • <strong>Direct Extension Link:</strong> Enables farmers to trigger AEDO callbacks instantly.
+                            • <strong>{'Kupanda Chotchinga cha Intaneti:' if is_ny else 'Zero Data Barrier:'}</strong> {'Alimi akumudzi omwe ali ndi mafoni a m\'manja a mabatani akhoza kupeza uphungu wa AI mosavuta.' if is_ny else 'Smallholders in rural villages without smartphones query the AI system via GSM.'}<br>
+                            • <strong>{'Kugwirizana ndi TNM & Airtel:' if is_ny else 'TNM & Airtel Ready:'}</strong> {'Dongosololi limalumikizana ndi ma network a m\'Malawi kudzera pa USSD.' if is_ny else 'Interfaces with national mobile aggregator USSD menus.'}<br>
+                            • <strong>{'Kulumikizana ndi Mlangizi:' if is_ny else 'Direct Extension Link:'}</strong> {'Alimi akhoza kupempha kuti a zaulimi a dera lawo awaimbire foni nthawi yomweyo.' if is_ny else 'Enables farmers to trigger AEDO callbacks instantly.'}
                         </div>
                     </div>
                     """,
