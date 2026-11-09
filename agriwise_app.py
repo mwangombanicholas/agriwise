@@ -1526,4 +1526,46 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
                         )
                     elif "3" in q_opt:
                         u_msg = (
-                            "MITENGO YA CHIMAN
+                            "MITENGO YA CHIMANGA (ADMARC):\n"
+                            "Thumbag la 50kg: MWK 44,000 - 48,000\n"
+                            "Mitengo yovomerezeka sabata ino."
+                        )
+                    else:
+                        u_msg = (
+                            "PEMPHO LATUMIZIDWA\n"
+                            "A zaulimi a dera lanu adzakuyimbirani posachedwa.\n"
+                            "Kapena imbani 7111 yaulere."
+                        )
+
+                    st.markdown(
+                        f"""
+                        <div class="terminal-console">
+                            {u_msg.replace(chr(10), '<br>')}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+            with sim2:
+                st.markdown(
+                    """
+                    <div class="feature-tile">
+                        <div style="font-weight:800; color:#0A2C1A; font-size:15px; margin-bottom:6px;">National System Reach:</div>
+                        <div style="color:#576C60; font-size:13px; line-height:1.6;">
+                            • <strong>Zero Data Barrier:</strong> Smallholders in rural villages without smartphones query the AI system via GSM.<br>
+                            • <strong>TNM & Airtel Ready:</strong> Interfaces with national mobile aggregator USSD menus.<br>
+                            • <strong>Direct Extension Link:</strong> Enables farmers to trigger AEDO callbacks instantly.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+    st.markdown(
+        """
+        <div class="app-footer">
+            <strong>AgriWise Malawi</strong> · National Agricultural Intelligence System · Ministry of Agriculture Standards · © 2026
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
