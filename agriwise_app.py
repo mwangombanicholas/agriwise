@@ -197,7 +197,7 @@ MALAWI_DISTRICTS = {
 
 
 # ---------------------------------------------------------------------------
-# 3. PREMIUM ENTERPRISE SYSTEM STYLING
+# 3. PREMIUM ENTERPRISE SYSTEM STYLING (HIGH CONTRAST & VISIBILITY)
 # ---------------------------------------------------------------------------
 def get_background_css():
     if os.path.exists(BG_IMAGE):
@@ -336,11 +336,61 @@ st.markdown(
         box-shadow: inset 0 0 16px rgba(0, 255, 102, 0.15);
     }}
 
+    /* ==========================================================
+       CRITICAL FIX: METRIC CARD TEXT VISIBILITY (SOLID HIGH CONTRAST)
+       ========================================================== */
     div[data-testid="stMetric"] {{
-        background: #FFFFFF;
-        border: 1px solid #E3ECE5;
-        padding: 16px;
-        border-radius: 12px;
+        background: #FFFFFF !important;
+        border: 2px solid #C4DCCB !important;
+        padding: 18px !important;
+        border-radius: 14px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
+    }}
+
+    /* Force all text inside white metric cards to bold dark green / black */
+    div[data-testid="stMetric"] * {{
+        color: #072614 !important;
+    }}
+
+    div[data-testid="stMetricLabel"] {{
+        color: #2F4D38 !important;
+        font-size: 13.5px !important;
+        font-weight: 800 !important;
+    }}
+
+    div[data-testid="stMetricLabel"] * {{
+        color: #2F4D38 !important;
+        font-weight: 800 !important;
+    }}
+
+    div[data-testid="stMetricValue"] {{
+        color: #072614 !important;
+        font-weight: 800 !important;
+        font-size: 28px !important;
+    }}
+
+    div[data-testid="stMetricValue"] * {{
+        color: #072614 !important;
+        font-weight: 800 !important;
+    }}
+
+    /* Form labels & tabs readability against dark background */
+    div[data-testid="stForm"] label,
+    div[data-testid="stTextInput"] label,
+    div[data-testid="stSelectbox"] label,
+    div[data-testid="stRadio"] label {{
+        color: #E2F3E8 !important;
+        font-weight: 700 !important;
+        font-size: 13.5px !important;
+    }}
+
+    div[data-testid="stTabs"] button[role="tab"] {{
+        color: #C3DFC9 !important;
+        font-weight: 700 !important;
+    }}
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
+        color: #FFFFFF !important;
+        border-bottom: 2px solid #00FF66 !important;
     }}
 
     .app-footer {{
@@ -688,8 +738,8 @@ if st.session_state.auth_user is None:
                     </h1>
                     <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
                         Welcome to your personal farming assistant. Take photos of your maize leaves to detect
-                        diseases in seconds, get Ministry of Agriculture spray recommendations, calculate fertilizer
-                        needs, and monitor weather for your district.
+                        diseases in seconds, get Ministry of Agriculture spray recommendations, and access localized
+                        weather telemetry for your district.
                     </p>
                     """,
                     unsafe_allow_html=True
@@ -705,7 +755,7 @@ if st.session_state.auth_user is None:
                     </h1>
                     <p style="color:#D5E8DC; font-size:15.5px; line-height:1.7; margin-bottom:20px;">
                         Landirani uphungu waposachedwa: jambulani tsamba la chimanga kuzindikira matenda,
-                        werengerani feteleza wa AIP m'munda mwanu, ndi kuwona momwe nyengo ilili lero.
+                        pezani mankhwala ovomerezeka ndi boma, ndi kuwona momwe nyengo ilili lero m'boma lanu.
                     </p>
                     """,
                     unsafe_allow_html=True
@@ -727,9 +777,9 @@ if st.session_state.auth_user is None:
                 st.markdown(
                     """
                     <div class="feature-tile">
-                        <div style="font-size:24px; margin-bottom:6px;">⚖️</div>
-                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">AIP Input Calculator</div>
-                        <div style="color:#576C60; font-size:12.5px;">Calculates exact 50kg bags of Basal NPK & Urea needed.</div>
+                        <div style="font-size:24px; margin-bottom:6px;">🌦️</div>
+                        <div style="font-weight:800; color:#0A2C1A; font-size:14.5px;">District Weather Advisory</div>
+                        <div style="color:#576C60; font-size:12.5px;">Real-time satellite feeds, rainfall tracking, and chemical spray condition alerts.</div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -737,12 +787,18 @@ if st.session_state.auth_user is None:
 
         with col_f_auth:
             with st.container(border=True):
+                # CRISP WHITE HEADING (HIGH VISIBILITY)
                 st.markdown(
                     """
-                    <div style="color:#007A3D; font-weight:800; font-size:11px; letter-spacing:1px;">
-                        FARMER SIGN IN
+                    <div style="color:#4ADE80; font-weight:800; font-size:12px; letter-spacing:1.5px; text-transform:uppercase;">
+                        FARMER ACCESS PORTAL
                     </div>
-                    <h3 style="color:#0C2618; margin:2px 0 10px 0;">Sign in to your farm</h3>
+                    <h2 style="color:#FFFFFF !important; margin:4px 0 6px 0; font-size:27px; font-weight:800;">
+                        Sign in to your farm
+                    </h2>
+                    <p style="color:#D5E8DC !important; font-size:13.5px; margin-bottom:16px;">
+                        Enter your credentials to access field crop doctor and telemetry.
+                    </p>
                     """,
                     unsafe_allow_html=True
                 )
@@ -805,16 +861,20 @@ if st.session_state.auth_user is None:
                         st.rerun()
 
     # =======================================================================
-    # PORTAL 2: SECURE OFFICER PORTAL (NO LEAKED PINS OR PASSWORDS)
+    # PORTAL 2: SECURE OFFICER PORTAL (WITH BACK BUTTON)
     # =======================================================================
     else:
 
         col_o_info, col_o_auth = st.columns([1.2, 0.9], gap="large")
 
         with col_o_info:
+            if st.button("← Back to Farmer Portal", key="btn_back_farmer_top"):
+                st.session_state.active_portal = "Farmer"
+                st.rerun()
+
             st.markdown(
                 """
-                <div style="color:#A7F3D0; font-size:12px; font-weight:800; letter-spacing:1.5px; margin-bottom:8px;">
+                <div style="color:#A7F3D0; font-size:12px; font-weight:800; letter-spacing:1.5px; margin-top:10px; margin-bottom:8px;">
                     MINISTRY OF AGRICULTURE · SURVEILLANCE DESK
                 </div>
                 <h1 style="color:white; font-size:42px; line-height:1.15; margin-bottom:14px;">
@@ -855,12 +915,18 @@ if st.session_state.auth_user is None:
 
         with col_o_auth:
             with st.container(border=True):
+                # CRISP WHITE HEADING (HIGH VISIBILITY)
                 st.markdown(
                     """
-                    <div style="color:#CE1126; font-weight:800; font-size:11px; letter-spacing:1.5px;">
-                        OFFICIAL OFFICER CLEARANCE
+                    <div style="color:#FF6B6B; font-weight:800; font-size:12px; letter-spacing:1.5px; text-transform:uppercase;">
+                        OFFICIAL CLEARANCE REQUIRED
                     </div>
-                    <h3 style="color:#0C2618; margin:2px 0 10px 0;">Ministry Officer Sign In</h3>
+                    <h2 style="color:#FFFFFF !important; margin:4px 0 6px 0; font-size:27px; font-weight:800;">
+                        Ministry Officer Sign In
+                    </h2>
+                    <p style="color:#D5E8DC !important; font-size:13.5px; margin-bottom:16px;">
+                        Enter your staff credentials and Department Clearance Token.
+                    </p>
                     """,
                     unsafe_allow_html=True
                 )
@@ -923,6 +989,11 @@ if st.session_state.auth_user is None:
                         }
                         st.rerun()
 
+                st.markdown("<hr style='margin:14px 0;'>", unsafe_allow_html=True)
+                if st.button("← Return to Farmer Portal", key="btn_return_farmer_bottom", use_container_width=True):
+                    st.session_state.active_portal = "Farmer"
+                    st.rerun()
+
     st.markdown(
         """
         <div class="app-footer">
@@ -967,8 +1038,9 @@ else:
             st.markdown("---")
             st.write("📞 **National Helpline:** 7111 (Toll-Free)")
 
-            if st.button("🚪 Sign Out (Officer)", use_container_width=True):
+            if st.button("🚪 Sign Out & Exit Desk", use_container_width=True):
                 st.session_state.auth_user = None
+                st.session_state.active_portal = "Farmer"
                 st.rerun()
 
         st.markdown(
@@ -1126,6 +1198,7 @@ else:
             if st.button("🚪 Sign Out (Farmer)", use_container_width=True):
                 st.session_state.auth_user = None
                 st.session_state.active_scan = None
+                st.session_state.active_portal = "Farmer"
                 st.rerun()
 
         # Community outbreak notice
@@ -1225,6 +1298,11 @@ else:
                         scan = st.session_state.active_scan
                         if scan:
                             st.divider()
+
+                            if st.button("← Back / Scan Another Leaf", key="btn_clear_scan"):
+                                st.session_state.active_scan = None
+                                st.rerun()
+
                             c_key = scan["class"]
                             c_conf = scan["conf"]
                             is_ny = (st.session_state.lang == "Chichewa")
@@ -1448,46 +1526,4 @@ OFFICIAL PRESCRIPTION & INTERVENTION:
                         )
                     elif "3" in q_opt:
                         u_msg = (
-                            "MITENGO YA CHIMANGA (ADMARC):\n"
-                            "Thumbag la 50kg: MWK 44,000 - 48,000\n"
-                            "Mitengo yovomerezeka sabata ino."
-                        )
-                    else:
-                        u_msg = (
-                            "PEMPHO LATUMIZIDWA\n"
-                            "A zaulimi a dera lanu adzakuyimbirani posachedwa.\n"
-                            "Kapena imbani 7111 yaulere."
-                        )
-
-                    st.markdown(
-                        f"""
-                        <div class="terminal-console">
-                            {u_msg.replace(chr(10), '<br>')}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-            with sim2:
-                st.markdown(
-                    """
-                    <div class="feature-tile">
-                        <div style="font-weight:800; color:#0A2C1A; font-size:15px; margin-bottom:6px;">National System Reach:</div>
-                        <div style="color:#576C60; font-size:13px; line-height:1.6;">
-                            • <strong>Zero Data Barrier:</strong> Smallholders in rural villages without smartphones query the AI system via GSM.<br>
-                            • <strong>TNM & Airtel Ready:</strong> Interfaces with national mobile aggregator USSD menus.<br>
-                            • <strong>Direct Extension Link:</strong> Enables farmers to trigger AEDO callbacks instantly.
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-    st.markdown(
-        """
-        <div class="app-footer">
-            <strong>AgriWise Malawi</strong> · National Agricultural Intelligence System · Ministry of Agriculture Standards · © 2026
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+                            "MITENGO YA CHIMAN
